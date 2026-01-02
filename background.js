@@ -50,23 +50,29 @@ messenger.menus.onClicked.addListener(async (info, tab) => {
 // Listen for message display to show banner (wrapped in try-catch for compatibility)
 async function setupMessageDisplayListener() {
   try {
-    if (messenger.messageDisplay && messenger.messageDisplay.onMessageDisplayed) {
-      messenger.messageDisplay.onMessageDisplayed.addListener(async (tab, message) => {
+    if (messenger.messageDisplay && messenger.messageDisplay.onMessagesDisplayed) {
+      messenger.messageDisplay.onMessagesDisplayed.addListener(async (tab, messageList) => {
+        // In MV3, onMessagesDisplayed returns a MessageList
+        const messages = messageList.messages || [];
+        if (messages.length === 0) return;
+        
+        const message = messages[0];
         const senderEmail = extractEmail(message.author);
         const matchingNote = await findMatchingNote(senderEmail);
         
         if (matchingNote) {
-          // Try to register message display scripts
+          // Use scripting.messageDisplay API for MV3
           try {
-            if (messenger.messageDisplayScripts) {
-              await messenger.messageDisplayScripts.register({
-                js: [{ file: "messageDisplay/note-banner.js" }],
-                css: [{ file: "messageDisplay/note-banner.css" }]
-              });
-            }
+            await messenger.scripting.messageDisplay.registerScripts([{
+              id: "note-banner-script",
+              js: ["messageDisplay/note-banner.js"],
+              css: ["messageDisplay/note-banner.css"]
+            }]);
           } catch (e) {
             // Script might already be registered
-            console.log("Script registration:", e.message);
+            if (!e.message?.includes("already registered")) {
+              console.log("Script registration:", e.message);
+            }
           }
           
           // Send the note data to the content script
