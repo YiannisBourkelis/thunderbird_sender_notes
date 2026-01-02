@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Sender Note</title>
+  <link rel="stylesheet" href="view-note.css">
+</head>
+<body>
+  <div class="container">
+    <div id="no-note" class="no-note">
+      <p>No note for this sender.</p>
+      <button id="add-note-btn" class="primary">Add Note</button>
+    </div>
+    <div id="has-note" class="has-note" style="display: none;">
+      <div class="note-header">
+        <strong>Note for sender:</strong>
+        <span id="sender-email"></span>
+      </div>
+      <div id="note-content" class="note-content"></div>
+      <div class="buttons">
+        <button id="edit-note-btn" class="primary">Edit</button>
+        <button id="delete-note-btn" class="danger">Delete</button>
+      </div>
+    </div>
+    <div id="status-message" class="status-message"></div>
+  </div>
+  <script src="view-note.js"></script>
+</body>
+</html>
