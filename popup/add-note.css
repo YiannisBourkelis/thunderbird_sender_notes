@@ -2,17 +2,24 @@
   box-sizing: border-box;
 }
 
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
   font-size: 14px;
-  margin: 0;
-  padding: 0;
   background-color: #f9f9fa;
   color: #0c0c0d;
 }
 
 .container {
   padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 h2 {
@@ -35,6 +42,13 @@ h2 {
 
 .form-group {
   margin-bottom: 16px;
+}
+
+.form-group.note-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Important for flex shrinking */
 }
 
 .form-group > label {
@@ -106,6 +120,10 @@ h2 {
 /* Textarea container for floating button */
 .textarea-container {
   position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 70px;
 }
 
 /* Dropdown */
@@ -256,13 +274,14 @@ h2 {
 
 textarea {
   width: 100%;
+  flex: 1;
   padding: 10px;
   padding-right: 40px; /* Space for floating button */
   border: 1px solid #cdcdcd;
   border-radius: 4px;
   font-family: inherit;
   font-size: 14px;
-  resize: vertical;
+  resize: none; /* Disable manual resize since it auto-resizes */
   min-height: 70px;
 }
 
