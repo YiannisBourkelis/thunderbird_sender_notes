@@ -26,6 +26,8 @@
 .mail-note-icon {
   font-size: 16px;
   flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 2px;
 }
 
 .mail-note-text {
@@ -41,6 +43,8 @@
   color: #8d6e63;
   flex-shrink: 0;
   opacity: 0.8;
+  align-self: flex-start;
+  margin-top: 2px;
 }
 
 /* Dark theme support */
