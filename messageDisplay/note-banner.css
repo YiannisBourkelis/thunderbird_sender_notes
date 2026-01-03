@@ -1,5 +1,10 @@
 /* Note banner styles - similar to Thunderbird's junk warning banner */
 
+.mail-note-banner-container {
+  position: relative;
+  z-index: 1000;
+}
+
 .mail-note-banner {
   display: flex;
   align-items: center;
@@ -12,7 +17,10 @@
   color: #5d4037;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: relative;
-  z-index: 1000;
+}
+
+.mail-note-banner:not(:last-child) {
+  margin-bottom: 2px;
 }
 
 .mail-note-icon {
@@ -25,6 +33,13 @@
   line-height: 1.4;
   word-wrap: break-word;
   overflow-wrap: break-word;
+}
+
+.mail-note-match-info {
+  font-size: 11px;
+  color: #8d6e63;
+  flex-shrink: 0;
+  opacity: 0.8;
 }
 
 .mail-note-close {
@@ -49,6 +64,10 @@
     background: linear-gradient(180deg, #4a4000 0%, #3d3500 100%);
     border-bottom-color: #6d5f00;
     color: #fff9c4;
+  }
+  
+  .mail-note-match-info {
+    color: #c5b358;
   }
   
   .mail-note-close {

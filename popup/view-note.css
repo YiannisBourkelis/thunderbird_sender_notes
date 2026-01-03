@@ -9,41 +9,65 @@ body {
   padding: 0;
   background-color: #f9f9fa;
   color: #0c0c0d;
-  min-width: 300px;
+  min-width: 320px;
 }
 
 .container {
   padding: 16px;
 }
 
-.no-note {
-  text-align: center;
-  padding: 20px 0;
-}
-
-.no-note p {
-  color: #737373;
-  margin-bottom: 16px;
-}
-
-.note-header {
+.sender-header {
   margin-bottom: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid #ededf0;
 }
 
-.note-header strong {
-  display: block;
+.sender-header strong {
   color: #0060df;
-  margin-bottom: 4px;
+  margin-right: 4px;
 }
 
-.note-content {
+.no-notes {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.no-notes p {
+  color: #737373;
+  margin-bottom: 16px;
+}
+
+.notes-list {
+  margin-bottom: 16px;
+}
+
+.note-item {
   background-color: #fffbcc;
   padding: 12px;
   border-radius: 4px;
   border-left: 4px solid #ffbd4f;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
+}
+
+.note-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.note-match-info {
+  font-size: 12px;
+  color: #737373;
+  font-style: italic;
+}
+
+.note-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.note-item-text {
   white-space: pre-wrap;
   word-wrap: break-word;
 }
@@ -78,6 +102,11 @@ button.danger {
 
 button.danger:hover {
   background-color: #a4000f;
+}
+
+button.btn-small {
+  padding: 4px 8px;
+  font-size: 12px;
 }
 
 .status-message {

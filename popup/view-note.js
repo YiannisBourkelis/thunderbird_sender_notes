@@ -1,13 +1,13 @@
 let currentSender = null;
+let currentNotes = [];
 
 // DOM elements
-const noNoteDiv = document.getElementById('no-note');
-const hasNoteDiv = document.getElementById('has-note');
+const noNotesDiv = document.getElementById('no-notes');
+const hasNotesDiv = document.getElementById('has-notes');
 const senderEmailSpan = document.getElementById('sender-email');
-const noteContent = document.getElementById('note-content');
+const notesList = document.getElementById('notes-list');
 const addNoteBtn = document.getElementById('add-note-btn');
-const editNoteBtn = document.getElementById('edit-note-btn');
-const deleteNoteBtn = document.getElementById('delete-note-btn');
+const addAnotherNoteBtn = document.getElementById('add-another-note-btn');
 const statusMessage = document.getElementById('status-message');
 
 // Helper function to extract email from author string
@@ -27,7 +27,35 @@ async function getCurrentSenderFromPopup() {
               "messages:", !!messenger.messages);
   
   try {
-    // Method 1: Try mailTabs.getSelectedMessages() - works for mail tabs
+    // Method 1: Try messageDisplay.getDisplayedMessages() - works for message tabs (MV3)
+    if (messenger.messageDisplay && messenger.messageDisplay.getDisplayedMessages) {
+      try {
+        const tabs = await messenger.tabs.query({});
+        console.log("Mail Note: Checking", tabs.length, "tabs for displayed messages");
+        
+        for (const tab of tabs) {
+          try {
+            const messageList = await messenger.messageDisplay.getDisplayedMessages(tab.id);
+            console.log("Mail Note: Tab", tab.id, "displayed messages:", messageList);
+            
+            if (messageList && messageList.messages && messageList.messages.length > 0) {
+              const message = messageList.messages[0];
+              console.log("Mail Note: Found displayed message in tab", tab.id, ":", message.author);
+              return {
+                email: extractEmail(message.author),
+                author: message.author
+              };
+            }
+          } catch (e) {
+            // Tab doesn't support message display, continue
+          }
+        }
+      } catch (e) {
+        console.log("Mail Note: messageDisplay.getDisplayedMessages failed:", e.message);
+      }
+    }
+    
+    // Method 2: Try mailTabs.getSelectedMessages() - works for mail tabs (3-pane view)
     if (messenger.mailTabs) {
       try {
         // Get all mail tabs
@@ -56,46 +84,6 @@ async function getCurrentSenderFromPopup() {
       }
     }
     
-    // Method 2: Try getting the current window and finding displayed message
-    if (messenger.windows) {
-      try {
-        const windows = await messenger.windows.getAll({ populate: true });
-        console.log("Mail Note: Found windows:", windows.length);
-        
-        for (const win of windows) {
-          if (win.type === 'normal' || win.type === 'messageDisplay') {
-            console.log("Mail Note: Checking window", win.id, "type:", win.type);
-            
-            // Try to get tabs in this window
-            if (win.tabs) {
-              for (const tab of win.tabs) {
-                console.log("Mail Note: Tab", tab.id, "type:", tab.type, "mailTab:", tab.mailTab);
-                
-                // Try mailTabs.getSelectedMessages on this tab
-                if (messenger.mailTabs && tab.mailTab) {
-                  try {
-                    const messageList = await messenger.mailTabs.getSelectedMessages(tab.id);
-                    if (messageList && messageList.messages && messageList.messages.length > 0) {
-                      const message = messageList.messages[0];
-                      console.log("Mail Note: Found message in window tab:", message.author);
-                      return {
-                        email: extractEmail(message.author),
-                        author: message.author
-                      };
-                    }
-                  } catch (e) {
-                    // Continue
-                  }
-                }
-              }
-            }
-          }
-        }
-      } catch (e) {
-        console.log("Mail Note: windows.getAll failed:", e.message);
-      }
-    }
-    
     // Method 3: Fallback to background script
     console.log("Mail Note: Trying background script fallback...");
     const result = await messenger.runtime.sendMessage({
@@ -112,6 +100,51 @@ async function getCurrentSenderFromPopup() {
   
   console.log("Mail Note: Could not find any message");
   return null;
+}
+
+// Render the list of notes
+function renderNotesList(notes) {
+  notesList.innerHTML = '';
+  
+  notes.forEach((note, index) => {
+    const noteItem = document.createElement('div');
+    noteItem.className = 'note-item';
+    noteItem.dataset.noteId = note.id;
+    
+    const noteHeader = document.createElement('div');
+    noteHeader.className = 'note-item-header';
+    
+    const matchInfo = document.createElement('span');
+    matchInfo.className = 'note-match-info';
+    matchInfo.textContent = `${note.matchType}: ${note.pattern}`;
+    
+    const noteActions = document.createElement('div');
+    noteActions.className = 'note-actions';
+    
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn-small primary';
+    editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', () => editNote(note));
+    
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn-small danger';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.addEventListener('click', () => deleteNote(note));
+    
+    noteActions.appendChild(editBtn);
+    noteActions.appendChild(deleteBtn);
+    
+    noteHeader.appendChild(matchInfo);
+    noteHeader.appendChild(noteActions);
+    
+    const noteText = document.createElement('div');
+    noteText.className = 'note-item-text';
+    noteText.textContent = note.note;
+    
+    noteItem.appendChild(noteHeader);
+    noteItem.appendChild(noteText);
+    notesList.appendChild(noteItem);
+  });
 }
 
 // Initialize
@@ -131,21 +164,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     senderEmailSpan.textContent = currentSender.author || currentSender.email;
     
-    // Load existing note
-    const existingNote = await messenger.runtime.sendMessage({
-      action: 'getNote',
+    // Load all matching notes
+    currentNotes = await messenger.runtime.sendMessage({
+      action: 'findAllMatchingNotes',
       email: currentSender.email
     });
     
-    console.log("Mail Note: existingNote =", existingNote);
+    console.log("Mail Note: currentNotes =", currentNotes);
     
-    if (existingNote) {
-      noteContent.textContent = existingNote.note;
-      noNoteDiv.style.display = 'none';
-      hasNoteDiv.style.display = 'block';
+    if (currentNotes && currentNotes.length > 0) {
+      renderNotesList(currentNotes);
+      noNotesDiv.style.display = 'none';
+      hasNotesDiv.style.display = 'block';
     } else {
-      noNoteDiv.style.display = 'block';
-      hasNoteDiv.style.display = 'none';
+      noNotesDiv.style.display = 'block';
+      hasNotesDiv.style.display = 'none';
     }
   } catch (error) {
     console.error("Mail Note: Error initializing view-note:", error);
@@ -170,9 +203,9 @@ addNoteBtn.addEventListener('click', async () => {
   }
 });
 
-// Edit note button
-editNoteBtn.addEventListener('click', async () => {
-  console.log("Mail Note: Edit button clicked");
+// Add another note button
+addAnotherNoteBtn.addEventListener('click', async () => {
+  console.log("Mail Note: Add Another Note button clicked, currentSender =", currentSender);
   
   if (!currentSender || !currentSender.email) {
     showStatus('No sender information available.', 'error');
@@ -187,33 +220,60 @@ editNoteBtn.addEventListener('click', async () => {
   }
 });
 
-// Delete note button
-deleteNoteBtn.addEventListener('click', async () => {
-  console.log("Mail Note: Delete button clicked");
+// Edit a specific note
+async function editNote(note) {
+  console.log("Mail Note: Edit note clicked", note);
   
   if (!currentSender || !currentSender.email) {
     showStatus('No sender information available.', 'error');
     return;
   }
   
+  try {
+    await openNoteEditorForNote(note);
+  } catch (error) {
+    console.error("Mail Note: Error opening note editor:", error);
+    showStatus('Error: ' + error.message, 'error');
+  }
+}
+
+// Delete a specific note
+async function deleteNote(note) {
+  console.log("Mail Note: Delete note clicked", note);
+  
   if (confirm('Are you sure you want to delete this note?')) {
     try {
       await messenger.runtime.sendMessage({
         action: 'deleteNote',
+        noteId: note.id
+      });
+      
+      // Refresh the banner
+      await messenger.runtime.sendMessage({
+        action: 'refreshBanner',
         email: currentSender.email
       });
       
       showStatus('Note deleted!', 'success');
       
-      // Update UI
-      noNoteDiv.style.display = 'block';
-      hasNoteDiv.style.display = 'none';
+      // Reload the notes list
+      currentNotes = await messenger.runtime.sendMessage({
+        action: 'findAllMatchingNotes',
+        email: currentSender.email
+      });
+      
+      if (currentNotes && currentNotes.length > 0) {
+        renderNotesList(currentNotes);
+      } else {
+        noNotesDiv.style.display = 'block';
+        hasNotesDiv.style.display = 'none';
+      }
     } catch (error) {
       console.error("Mail Note: Error deleting note:", error);
       showStatus('Error: ' + error.message, 'error');
     }
   }
-});
+}
 
 // Open note editor - sends message to background to open popup window
 async function openNoteEditor() {
@@ -224,6 +284,26 @@ async function openNoteEditor() {
     action: 'openAddNotePopup',
     email: currentSender.email,
     author: currentSender.author
+  });
+  
+  console.log("Mail Note: openAddNotePopup result:", result);
+  
+  if (result && result.success) {
+    // Close this popup
+    window.close();
+  }
+}
+
+// Open note editor for a specific note
+async function openNoteEditorForNote(note) {
+  console.log("Mail Note: Opening note editor for note", note);
+  
+  // Send message to background script to open popup with note ID
+  const result = await messenger.runtime.sendMessage({
+    action: 'openAddNotePopup',
+    email: currentSender.email,
+    author: currentSender.author,
+    noteId: note.id
   });
   
   console.log("Mail Note: openAddNotePopup result:", result);

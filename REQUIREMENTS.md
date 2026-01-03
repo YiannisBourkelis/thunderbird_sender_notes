@@ -21,24 +21,31 @@ A Thunderbird addon that allows users to attach notes to email senders. When an 
 - **FR2.2**: The match pattern must be validated against the current sender email before saving
 - **FR2.3**: Notes cannot be saved with an empty note text
 - **FR2.4**: Notes cannot be saved if the pattern doesn't match the current sender
+- **FR2.5**: Notes cannot be saved if another note with the exact same pattern AND match type already exists. User should be notified under the pattern field that they need to update the existing note instead.
 
 ### 3. Display Note Banner
-- **FR3.1**: When viewing an email, check all saved notes for a matching pattern
-- **FR3.2**: If a match is found, display a banner at the top of the message pane
-- **FR3.3**: The banner should be visually distinct (e.g., colored background)
-- **FR3.4**: The banner displays the note text
-- **FR3.5**: The banner should include a way to edit or remove the note
+- **FR3.1**: When viewing an email, check all saved notes for matching patterns
+- **FR3.2**: If matches are found, display one banner per matching note at the top of the message pane
+- **FR3.3**: Multiple banners can be displayed for the same email (e.g., exact match + domain match)
+- **FR3.4**: The banners should be visually distinct (e.g., colored background)
+- **FR3.5**: Each banner displays its note text
+- **FR3.6**: Each banner should include a way to edit or remove its specific note
 
-### 4. Note Management
-- **FR4.1**: Notes are persisted across Thunderbird sessions
-- **FR4.2**: Notes are stored locally using Thunderbird's storage API
-- **FR4.3**: User can view all saved notes (optional: settings page)
+### 4. Multiple Notes Per Email
+- **FR4.1**: An email can match multiple notes with different patterns (e.g., exact: "user@domain.com" AND endsWith: "@domain.com")
+- **FR4.2**: The message display action popup should list all matching notes for the current sender
+- **FR4.3**: User can edit or delete individual notes from the list
 
-### 5. Quick Notes / Templates
-- **FR5.1**: Predefined quick note templates for common scenarios
-- **FR5.2**: User can add custom templates
-- **FR5.3**: User can delete templates
-- **FR5.4**: Templates persist across sessions
+### 5. Note Management
+- **FR5.1**: Notes are persisted across Thunderbird sessions
+- **FR5.2**: Notes are stored locally using Thunderbird's storage API
+- **FR5.3**: User can view all saved notes (optional: settings page)
+
+### 6. Quick Notes / Templates
+- **FR6.1**: Predefined quick note templates for common scenarios
+- **FR6.2**: User can add custom templates
+- **FR6.3**: User can delete templates
+- **FR6.4**: Templates persist across sessions
 
 ## Non-Functional Requirements
 

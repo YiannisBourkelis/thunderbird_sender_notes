@@ -2,6 +2,7 @@
 const urlParams = new URLSearchParams(window.location.search);
 const senderEmail = urlParams.get('email');
 const senderAuthor = urlParams.get('author');
+const noteIdParam = urlParams.get('noteId');
 
 // DOM elements
 const senderEmailSpan = document.getElementById('sender-email');
@@ -35,11 +36,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load templates
   await loadTemplates();
   
-  // Load existing note if any
-  const existingNote = await messenger.runtime.sendMessage({
-    action: 'findMatchingNote',
-    email: senderEmail
-  });
+  // Load existing note - by ID if provided, otherwise find matching
+  let existingNote = null;
+  
+  if (noteIdParam) {
+    // Load specific note by ID
+    const allNotes = await messenger.runtime.sendMessage({ action: 'getAllNotes' });
+    if (allNotes && allNotes[noteIdParam]) {
+      existingNote = { ...allNotes[noteIdParam], id: noteIdParam };
+    }
+  } else {
+    // Find first matching note
+    existingNote = await messenger.runtime.sendMessage({
+      action: 'findMatchingNote',
+      email: senderEmail
+    });
+  }
   
   if (existingNote) {
     matchTypeSelect.value = existingNote.matchType;
@@ -122,7 +134,7 @@ function validatePattern(email, pattern, matchType) {
 }
 
 // Update match preview
-function updateMatchPreview() {
+async function updateMatchPreview() {
   const matchType = matchTypeSelect.value;
   const pattern = matchPatternInput.value.trim();
   
@@ -134,6 +146,19 @@ function updateMatchPreview() {
   const isValid = validatePattern(senderEmail, pattern, matchType);
   
   if (isValid) {
+    // Check for duplicate pattern
+    const duplicate = await messenger.runtime.sendMessage({
+      action: 'checkDuplicatePattern',
+      pattern: pattern,
+      matchType: matchType,
+      excludeNoteId: existingNoteId
+    });
+    
+    if (duplicate && duplicate.exists) {
+      matchPreview.innerHTML = `<span class="preview-error">⚠️ A note with this exact pattern and match type already exists. Please edit the existing note instead.</span>`;
+      return;
+    }
+    
     let description = '';
     switch (matchType) {
       case 'exact':
@@ -279,11 +304,28 @@ saveBtn.addEventListener('click', async () => {
   }
   
   try {
-    await messenger.runtime.sendMessage({
+    const result = await messenger.runtime.sendMessage({
       action: 'saveNote',
+      noteId: existingNoteId,
       pattern: pattern,
       matchType: matchType,
       note: note
+    });
+    
+    // Check if save was successful
+    if (result && result.success === false) {
+      if (result.error === 'duplicate') {
+        showStatus(result.message, 'error');
+        return;
+      }
+      showStatus('Error saving note: ' + (result.message || 'Unknown error'), 'error');
+      return;
+    }
+    
+    // Refresh the banner in any open message tabs
+    await messenger.runtime.sendMessage({
+      action: 'refreshBanner',
+      email: senderEmail
     });
     
     showStatus('Note saved successfully!', 'success');
@@ -300,6 +342,12 @@ deleteBtn.addEventListener('click', async () => {
       await messenger.runtime.sendMessage({
         action: 'deleteNote',
         noteId: existingNoteId
+      });
+      
+      // Refresh the banner in any open message tabs (will hide it)
+      await messenger.runtime.sendMessage({
+        action: 'refreshBanner',
+        email: senderEmail
       });
       
       showStatus('Note deleted!', 'success');

@@ -11,17 +11,26 @@
   }
   window.mailNoteInitialized = true;
 
-  let bannerElement = null;
+  let bannerContainer = null;
 
-  // Create the banner element
-  function createBanner() {
-    if (bannerElement && document.body.contains(bannerElement)) {
-      return bannerElement;
+  // Create the banner container
+  function createBannerContainer() {
+    if (bannerContainer && document.body.contains(bannerContainer)) {
+      return bannerContainer;
     }
 
-    bannerElement = document.createElement('div');
-    bannerElement.id = 'mail-note-banner';
-    bannerElement.className = 'mail-note-banner';
+    bannerContainer = document.createElement('div');
+    bannerContainer.id = 'mail-note-banner-container';
+    bannerContainer.className = 'mail-note-banner-container';
+    
+    return bannerContainer;
+  }
+
+  // Create a single banner element for a note
+  function createBanner(noteId, note, pattern, matchType) {
+    const banner = document.createElement('div');
+    banner.className = 'mail-note-banner';
+    banner.dataset.noteId = noteId;
     
     const noteIcon = document.createElement('span');
     noteIcon.className = 'mail-note-icon';
@@ -29,43 +38,62 @@
     
     const noteText = document.createElement('span');
     noteText.className = 'mail-note-text';
-    noteText.id = 'mail-note-text';
+    noteText.textContent = note;
+    
+    const matchInfo = document.createElement('span');
+    matchInfo.className = 'mail-note-match-info';
+    matchInfo.textContent = `(${matchType}: ${pattern})`;
+    matchInfo.title = `Match type: ${matchType}, Pattern: ${pattern}`;
     
     const closeBtn = document.createElement('button');
     closeBtn.className = 'mail-note-close';
     closeBtn.textContent = '×';
     closeBtn.title = 'Dismiss';
     closeBtn.addEventListener('click', () => {
-      hideBanner();
+      banner.style.display = 'none';
     });
     
-    bannerElement.appendChild(noteIcon);
-    bannerElement.appendChild(noteText);
-    bannerElement.appendChild(closeBtn);
+    banner.appendChild(noteIcon);
+    banner.appendChild(noteText);
+    banner.appendChild(matchInfo);
+    banner.appendChild(closeBtn);
     
-    return bannerElement;
+    return banner;
   }
 
-  // Show the banner with note content
-  function showBanner(note, pattern, matchType) {
-    console.log("Mail Note: Showing banner:", note);
-    const banner = createBanner();
-    const noteText = banner.querySelector('#mail-note-text');
-    noteText.textContent = note;
+  // Show banners for multiple notes
+  function showBanners(notes) {
+    console.log("Mail Note: Showing banners for", notes.length, "notes");
+    const container = createBannerContainer();
     
-    // Insert at the beginning of the body
-    if (!document.body.contains(banner)) {
-      document.body.insertBefore(banner, document.body.firstChild);
+    // Clear existing banners
+    container.innerHTML = '';
+    
+    // Create a banner for each note
+    for (const noteData of notes) {
+      const banner = createBanner(noteData.id, noteData.note, noteData.pattern, noteData.matchType);
+      container.appendChild(banner);
     }
     
-    banner.style.display = 'flex';
+    // Insert container at the beginning of the body
+    if (!document.body.contains(container)) {
+      document.body.insertBefore(container, document.body.firstChild);
+    }
+    
+    container.style.display = 'block';
   }
 
-  // Hide the banner
-  function hideBanner() {
-    console.log("Mail Note: Hiding banner");
-    if (bannerElement) {
-      bannerElement.style.display = 'none';
+  // Show a single banner (backward compatibility)
+  function showBanner(note, pattern, matchType, noteId) {
+    console.log("Mail Note: Showing single banner:", note);
+    showBanners([{ id: noteId || 'single', note, pattern, matchType }]);
+  }
+
+  // Hide all banners
+  function hideBanners() {
+    console.log("Mail Note: Hiding banners");
+    if (bannerContainer) {
+      bannerContainer.style.display = 'none';
     }
   }
 
@@ -73,34 +101,39 @@
   messenger.runtime.onMessage.addListener((message, sender) => {
     console.log("Mail Note: Content script received message:", message);
     
-    if (message.action === 'showNoteBanner') {
-      showBanner(message.note, message.pattern, message.matchType);
+    if (message.action === 'showNoteBanners') {
+      // New action for multiple banners
+      showBanners(message.notes);
+      return Promise.resolve({ success: true });
+    } else if (message.action === 'showNoteBanner') {
+      // Backward compatibility for single banner
+      showBanner(message.note, message.pattern, message.matchType, message.noteId);
       return Promise.resolve({ success: true });
     } else if (message.action === 'hideNoteBanner') {
-      hideBanner();
+      hideBanners();
       return Promise.resolve({ success: true });
     }
     
     return false;
   });
 
-  // On load, request the note for the current message
+  // On load, request the notes for the current message
   async function checkForNote() {
     try {
-      console.log("Mail Note: Checking for note on page load...");
+      console.log("Mail Note: Checking for notes on page load...");
       
-      // Ask background script if there's a note for current message
+      // Ask background script for all notes for current message
       const result = await messenger.runtime.sendMessage({
-        action: 'checkCurrentMessageNote'
+        action: 'checkCurrentMessageNotes'
       });
       
-      console.log("Mail Note: checkCurrentMessageNote result:", result);
+      console.log("Mail Note: checkCurrentMessageNotes result:", result);
       
-      if (result && result.hasNote) {
-        showBanner(result.note, result.pattern, result.matchType);
+      if (result && result.hasNotes && result.notes && result.notes.length > 0) {
+        showBanners(result.notes);
       }
     } catch (e) {
-      console.log("Mail Note: Error checking for note:", e);
+      console.log("Mail Note: Error checking for notes:", e);
     }
   }
 
