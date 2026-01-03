@@ -30,5 +30,9 @@
       "32": "icons/icon-48.svg"
     },
     "default_popup": "popup/view-note.html"
+  },
+  "options_ui": {
+    "page": "manage/manage-notes.html",
+    "open_in_tab": true
   }
 }

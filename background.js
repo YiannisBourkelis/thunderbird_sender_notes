@@ -28,6 +28,13 @@ messenger.menus.create({
   contexts: ["message_list"]
 });
 
+// Create Tools menu item for managing all notes
+messenger.menus.create({
+  id: "manage-all-notes",
+  title: "Sender Notes: Manage All",
+  contexts: ["tools_menu"]
+});
+
 // Handle context menu clicks
 messenger.menus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === "add-sender-note") {
@@ -44,8 +51,16 @@ messenger.menus.onClicked.addListener(async (info, tab) => {
         height: 500
       });
     }
+  } else if (info.menuItemId === "manage-all-notes") {
+    // Open manage notes window
+    await openManageNotesWindow();
   }
 });
+
+// Open the manage notes page (options page)
+async function openManageNotesWindow() {
+  await messenger.runtime.openOptionsPage();
+}
 
 // Listen for message display to show banner (wrapped in try-catch for compatibility)
 async function setupMessageDisplayListener() {
@@ -161,6 +176,10 @@ messenger.runtime.onMessage.addListener(async (message, sender) => {
         width: 500,
         height: 500
       });
+      return { success: true };
+    
+    case "openManageNotes":
+      await openManageNotesWindow();
       return { success: true };
     
     case "checkCurrentMessageNote":

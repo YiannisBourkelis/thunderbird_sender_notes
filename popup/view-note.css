@@ -75,6 +75,23 @@ body {
 .buttons {
   display: flex;
   gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+button.icon-btn {
+  background: transparent;
+  border: 1px solid #ced4da;
+  padding: 6px 10px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-left: auto;
+}
+
+button.icon-btn:hover {
+  background-color: #e9ecef;
 }
 
 button {

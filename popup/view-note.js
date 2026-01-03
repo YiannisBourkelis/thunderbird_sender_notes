@@ -8,6 +8,8 @@ const senderEmailSpan = document.getElementById('sender-email');
 const notesList = document.getElementById('notes-list');
 const addNoteBtn = document.getElementById('add-note-btn');
 const addAnotherNoteBtn = document.getElementById('add-another-note-btn');
+const manageNotesBtn = document.getElementById('manage-notes-btn');
+const manageNotesBtnEmpty = document.getElementById('manage-notes-btn-empty');
 const statusMessage = document.getElementById('status-message');
 
 // Helper function to extract email from author string
@@ -213,6 +215,25 @@ addAnotherNoteBtn.addEventListener('click', async () => {
     showStatus('Error: ' + error.message, 'error');
   }
 });
+
+// Manage all notes buttons
+async function openManageNotes() {
+  try {
+    const result = await messenger.runtime.sendMessage({
+      action: 'openManageNotes'
+    });
+    
+    if (result && result.success) {
+      window.close();
+    }
+  } catch (error) {
+    console.error("Mail Note: Error opening manage notes:", error);
+    showStatus('Error: ' + error.message, 'error');
+  }
+}
+
+manageNotesBtn.addEventListener('click', openManageNotes);
+manageNotesBtnEmpty.addEventListener('click', openManageNotes);
 
 // Edit a specific note
 async function editNote(note) {

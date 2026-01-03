@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Manage All Notes</title>
+  <link rel="stylesheet" href="manage-notes.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-title">
+        <h1>📝 All Sender Notes</h1>
+        <span id="notes-count" class="notes-count"></span>
+      </div>
+      <div class="header-actions">
+        <input type="text" id="search-input" placeholder="Search notes..." />
+      </div>
+    </div>
+    
+    <div id="notes-table-container" class="notes-table-container">
+      <table id="notes-table" class="notes-table">
+        <thead>
+          <tr>
+            <th class="sortable" data-sort="pattern">Pattern <span class="sort-icon"></span></th>
+            <th class="sortable" data-sort="matchType">Match Type <span class="sort-icon"></span></th>
+            <th class="sortable" data-sort="note">Note <span class="sort-icon"></span></th>
+            <th class="sortable" data-sort="createdAt">Created <span class="sort-icon"></span></th>
+            <th class="sortable" data-sort="updatedAt">Updated <span class="sort-icon"></span></th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="notes-tbody"></tbody>
+      </table>
+    </div>
+    
+    <div id="no-notes" class="no-notes" style="display: none;">
+      <p>No notes saved yet.</p>
+      <p>Right-click on an email and select "Add Note to Sender" to create your first note.</p>
+    </div>
+    
+    <div id="status-message" class="status-message"></div>
+  </div>
+  <script src="manage-notes.js"></script>
+</body>
+</html>

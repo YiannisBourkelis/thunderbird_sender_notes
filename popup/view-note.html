@@ -13,12 +13,16 @@
     </div>
     <div id="no-notes" class="no-notes">
       <p>No notes for this sender.</p>
-      <button id="add-note-btn" class="primary">Add Note</button>
+      <div class="buttons">
+        <button id="add-note-btn" class="primary">Add Note</button>
+        <button id="manage-notes-btn-empty" class="icon-btn" title="Manage All Notes">⚙️</button>
+      </div>
     </div>
     <div id="has-notes" class="has-notes" style="display: none;">
       <div id="notes-list" class="notes-list"></div>
       <div class="buttons">
         <button id="add-another-note-btn" class="primary">Add Another Note</button>
+        <button id="manage-notes-btn" class="icon-btn" title="Manage All Notes">⚙️</button>
       </div>
     </div>
     <div id="status-message" class="status-message"></div>
