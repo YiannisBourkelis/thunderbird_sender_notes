@@ -70,69 +70,26 @@ async function openManageNotesWindow(tab = 'notes') {
   }
 }
 
-// Listen for message display to show banner (wrapped in try-catch for compatibility)
-async function setupMessageDisplayListener() {
+// Register the message display script at startup
+// The script will automatically check for notes when injected into a message display
+async function registerMessageDisplayScript() {
   try {
-    // Always register the banner script at startup so it's ready for all message displays
-    // This is crucial for the first note scenario - the script needs to be there
-    // before we can send it messages
-    try {
-      await messenger.scripting.messageDisplay.registerScripts([{
-        id: "note-banner-script",
-        js: ["messageDisplay/note-banner.js"],
-        css: ["messageDisplay/note-banner.css"]
-      }]);
-      console.log("Mail Note: Banner script registered");
-    } catch (e) {
-      // Script might already be registered from a previous session
-      if (!e.message?.includes("already registered")) {
-        console.log("Script registration:", e.message);
-      }
-    }
-    
-    if (messenger.messageDisplay && messenger.messageDisplay.onMessagesDisplayed) {
-      messenger.messageDisplay.onMessagesDisplayed.addListener(async (tab, messageList) => {
-        // In MV3, onMessagesDisplayed returns a MessageList
-        const messages = messageList.messages || [];
-        if (messages.length === 0) return;
-        
-        const message = messages[0];
-        const senderEmail = extractEmail(message.author);
-        const matchingNotes = await findAllMatchingNotes(senderEmail);
-        
-        if (matchingNotes && matchingNotes.length > 0) {
-          // Send all notes to the content script
-          try {
-            await messenger.tabs.sendMessage(tab.id, {
-              action: "showNoteBanners",
-              notes: matchingNotes,
-              senderEmail: senderEmail
-            });
-          } catch (e) {
-            console.log("Could not send message to tab:", e.message);
-          }
-        } else {
-          // Hide banner if no notes exist
-          try {
-            await messenger.tabs.sendMessage(tab.id, {
-              action: "hideNoteBanner"
-            });
-          } catch (e) {
-            // Tab might not have the script yet
-          }
-        }
-      });
-      console.log("Mail Note: messageDisplay listener registered");
-    } else {
-      console.log("Mail Note: messageDisplay API not available");
-    }
+    await messenger.scripting.messageDisplay.registerScripts([{
+      id: "note-banner-script",
+      js: ["messageDisplay/note-banner.js"],
+      css: ["messageDisplay/note-banner.css"]
+    }]);
+    console.log("Mail Note: Banner script registered");
   } catch (e) {
-    console.error("Mail Note: Error setting up messageDisplay listener:", e);
+    // Script might already be registered from a previous session
+    if (!e.message?.includes("already registered")) {
+      console.log("Script registration:", e.message);
+    }
   }
 }
 
-// Initialize the listener
-setupMessageDisplayListener();
+// Initialize the script registration
+registerMessageDisplayScript();
 
 // Handle messages from popups and content scripts
 messenger.runtime.onMessage.addListener(async (message, sender) => {
