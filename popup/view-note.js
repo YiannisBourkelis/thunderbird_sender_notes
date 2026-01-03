@@ -126,13 +126,7 @@ function renderNotesList(notes) {
     editBtn.textContent = 'Edit';
     editBtn.addEventListener('click', () => editNote(note));
     
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'btn-small danger';
-    deleteBtn.textContent = 'Delete';
-    deleteBtn.addEventListener('click', () => deleteNote(note));
-    
     noteActions.appendChild(editBtn);
-    noteActions.appendChild(deleteBtn);
     
     noteHeader.appendChild(matchInfo);
     noteHeader.appendChild(noteActions);
