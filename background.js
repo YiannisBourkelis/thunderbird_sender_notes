@@ -58,8 +58,16 @@ messenger.menus.onClicked.addListener(async (info, tab) => {
 });
 
 // Open the manage notes page (options page)
-async function openManageNotesWindow() {
-  await messenger.runtime.openOptionsPage();
+async function openManageNotesWindow(tab = 'notes') {
+  // Open options page with tab parameter
+  if (tab === 'templates') {
+    // Use tabs.create to open with hash for specific tab
+    await messenger.tabs.create({
+      url: messenger.runtime.getURL('manage/manage-notes.html#templates')
+    });
+  } else {
+    await messenger.runtime.openOptionsPage();
+  }
 }
 
 // Listen for message display to show banner (wrapped in try-catch for compatibility)
@@ -183,6 +191,10 @@ messenger.runtime.onMessage.addListener(async (message, sender) => {
     
     case "openManageNotes":
       await openManageNotesWindow();
+      return { success: true };
+    
+    case "openManageNotesTemplates":
+      await openManageNotesWindow('templates');
       return { success: true };
     
     case "checkCurrentMessageNote":

@@ -17,11 +17,6 @@ const saveBtn = document.getElementById('save-btn');
 const deleteBtn = document.getElementById('delete-btn');
 const cancelBtn = document.getElementById('cancel-btn');
 const statusMessage = document.getElementById('status-message');
-const templateModal = document.getElementById('template-modal');
-const templateList = document.getElementById('template-list');
-const newTemplateInput = document.getElementById('new-template');
-const addTemplateBtn = document.getElementById('add-template-btn');
-const closeModalBtn = document.getElementById('close-modal-btn');
 const noteDatesDiv = document.getElementById('note-dates');
 const dateCreatedSpan = document.getElementById('date-created');
 const dateUpdatedSpan = document.getElementById('date-updated');
@@ -270,46 +265,12 @@ function renderDropdown() {
   const manageItem = document.createElement('div');
   manageItem.className = 'dropdown-item manage-item';
   manageItem.innerHTML = '⚙️ Manage Quick Notes';
-  manageItem.addEventListener('click', () => {
+  manageItem.addEventListener('click', async () => {
     quickNoteDropdown.classList.remove('show');
-    openManageModal();
+    // Open the settings page (templates tab)
+    await messenger.runtime.sendMessage({ action: 'openManageNotesTemplates' });
   });
   quickNoteDropdown.appendChild(manageItem);
-}
-
-// Open manage modal
-function openManageModal() {
-  renderTemplateList();
-  templateModal.style.display = 'flex';
-}
-
-// Render template list in modal
-function renderTemplateList() {
-  templateList.innerHTML = '';
-  
-  templates.forEach((template, index) => {
-    const li = document.createElement('li');
-    li.className = 'template-item';
-    
-    const text = document.createElement('span');
-    text.className = 'template-text';
-    text.textContent = template;
-    text.title = template;
-    
-    const delBtn = document.createElement('button');
-    delBtn.className = 'template-delete';
-    delBtn.textContent = '×';
-    delBtn.title = 'Delete';
-    delBtn.addEventListener('click', async () => {
-      await messenger.runtime.sendMessage({ action: 'deleteTemplate', index });
-      await loadTemplates();
-      renderTemplateList();
-    });
-    
-    li.appendChild(text);
-    li.appendChild(delBtn);
-    templateList.appendChild(li);
-  });
 }
 
 // Save note
@@ -394,35 +355,6 @@ cancelBtn.addEventListener('click', () => {
   window.close();
 });
 
-// Close modal
-closeModalBtn.addEventListener('click', () => {
-  templateModal.style.display = 'none';
-});
-
-// Add new template
-addTemplateBtn.addEventListener('click', async () => {
-  const newTemplate = newTemplateInput.value.trim();
-  if (newTemplate) {
-    await messenger.runtime.sendMessage({ action: 'addTemplate', template: newTemplate });
-    newTemplateInput.value = '';
-    await loadTemplates();
-    renderTemplateList();
-  }
-});
-
-newTemplateInput.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    addTemplateBtn.click();
-  }
-});
-
-// Close modal on outside click
-templateModal.addEventListener('click', (e) => {
-  if (e.target === templateModal) {
-    templateModal.style.display = 'none';
-  }
-});
-
 // Show status message
 function showStatus(message, type) {
   statusMessage.textContent = message;
@@ -435,3 +367,10 @@ function showStatus(message, type) {
     }, 5000);
   }
 }
+
+// Listen for storage changes to refresh templates
+messenger.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === 'local' && changes.templates) {
+    loadTemplates();
+  }
+});

@@ -421,6 +421,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load templates
   loadTemplates();
   
+  // Check for hash to switch tab
+  if (window.location.hash === '#templates') {
+    switchTab('templates');
+  }
+  
   // Tab switching
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
