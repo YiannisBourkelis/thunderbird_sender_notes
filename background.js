@@ -73,6 +73,23 @@ async function openManageNotesWindow(tab = 'notes') {
 // Listen for message display to show banner (wrapped in try-catch for compatibility)
 async function setupMessageDisplayListener() {
   try {
+    // Always register the banner script at startup so it's ready for all message displays
+    // This is crucial for the first note scenario - the script needs to be there
+    // before we can send it messages
+    try {
+      await messenger.scripting.messageDisplay.registerScripts([{
+        id: "note-banner-script",
+        js: ["messageDisplay/note-banner.js"],
+        css: ["messageDisplay/note-banner.css"]
+      }]);
+      console.log("Mail Note: Banner script registered");
+    } catch (e) {
+      // Script might already be registered from a previous session
+      if (!e.message?.includes("already registered")) {
+        console.log("Script registration:", e.message);
+      }
+    }
+    
     if (messenger.messageDisplay && messenger.messageDisplay.onMessagesDisplayed) {
       messenger.messageDisplay.onMessagesDisplayed.addListener(async (tab, messageList) => {
         // In MV3, onMessagesDisplayed returns a MessageList
@@ -84,20 +101,6 @@ async function setupMessageDisplayListener() {
         const matchingNotes = await findAllMatchingNotes(senderEmail);
         
         if (matchingNotes && matchingNotes.length > 0) {
-          // Use scripting.messageDisplay API for MV3
-          try {
-            await messenger.scripting.messageDisplay.registerScripts([{
-              id: "note-banner-script",
-              js: ["messageDisplay/note-banner.js"],
-              css: ["messageDisplay/note-banner.css"]
-            }]);
-          } catch (e) {
-            // Script might already be registered
-            if (!e.message?.includes("already registered")) {
-              console.log("Script registration:", e.message);
-            }
-          }
-          
           // Send all notes to the content script
           try {
             await messenger.tabs.sendMessage(tab.id, {
@@ -236,6 +239,56 @@ messenger.runtime.onMessage.addListener(async (message, sender) => {
   }
 });
 
+// Helper function to inject banner script and CSS into a tab
+async function injectBannerScriptIntoTab(tabId) {
+  try {
+    // First inject the CSS
+    await messenger.scripting.insertCSS({
+      target: { tabId: tabId },
+      files: ["messageDisplay/note-banner.css"]
+    });
+    
+    // Then inject the JS
+    await messenger.scripting.executeScript({
+      target: { tabId: tabId },
+      files: ["messageDisplay/note-banner.js"]
+    });
+    
+    return true;
+  } catch (e) {
+    console.log("Could not inject script into tab:", e.message);
+    return false;
+  }
+}
+
+// Helper function to send message to tab, injecting script if needed
+async function sendMessageToTabWithInjection(tabId, message) {
+  // First try to send the message
+  try {
+    await messenger.tabs.sendMessage(tabId, message);
+    return true;
+  } catch (e) {
+    // Script not loaded - inject it first
+    console.log("Script not loaded, injecting...");
+    const injected = await injectBannerScriptIntoTab(tabId);
+    
+    if (injected) {
+      // Wait a moment for script to initialize
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Try sending again
+      try {
+        await messenger.tabs.sendMessage(tabId, message);
+        return true;
+      } catch (e2) {
+        console.log("Still could not send message after injection:", e2.message);
+        return false;
+      }
+    }
+    return false;
+  }
+}
+
 // Refresh the note banner for a specific email in all tabs
 async function refreshBannerForEmail(email) {
   try {
@@ -256,28 +309,21 @@ async function refreshBannerForEmail(email) {
             const matchingNotes = await findAllMatchingNotes(msgEmail);
             
             if (matchingNotes && matchingNotes.length > 0) {
-              // Register scripts if needed
-              try {
-                await messenger.scripting.messageDisplay.registerScripts([{
-                  id: "note-banner-script",
-                  js: ["messageDisplay/note-banner.js"],
-                  css: ["messageDisplay/note-banner.css"]
-                }]);
-              } catch (e) {
-                // Script might already be registered
-              }
-              
-              // Send update to show all banners
-              await messenger.tabs.sendMessage(tab.id, {
+              // Send message to tab, injecting script if needed
+              await sendMessageToTabWithInjection(tab.id, {
                 action: "showNoteBanners",
                 notes: matchingNotes,
                 senderEmail: msgEmail
               });
             } else if (msgEmail.toLowerCase() === email.toLowerCase()) {
               // Hide banners if no notes exist
-              await messenger.tabs.sendMessage(tab.id, {
-                action: "hideNoteBanner"
-              });
+              try {
+                await messenger.tabs.sendMessage(tab.id, {
+                  action: "hideNoteBanner"
+                });
+              } catch (e) {
+                // Tab might not have the script yet - that's OK for hide
+              }
             }
           }
         }
