@@ -171,6 +171,28 @@ messenger.runtime.onMessage.addListener(async (message, sender) => {
       // Called by content script to check if current message sender has notes (multiple notes)
       return await checkCurrentMessageNotes(sender.tab?.id);
     
+    case "editNoteFromBanner":
+      // Open the edit popup for a note clicked in the banner
+      try {
+        const data = await messenger.storage.local.get('notes');
+        const notes = data.notes || {};
+        const noteData = notes[message.noteId];
+        if (noteData) {
+          const popupUrl = `popup/add-note.html?email=${encodeURIComponent(noteData.pattern || message.noteId)}&author=${encodeURIComponent(noteData.pattern || message.noteId)}&noteId=${encodeURIComponent(message.noteId)}`;
+          await messenger.windows.create({
+            type: "popup",
+            url: popupUrl,
+            width: 500,
+            height: 500
+          });
+          return { success: true };
+        }
+        return { success: false, error: 'Note not found' };
+      } catch (e) {
+        console.error("Error opening edit popup:", e);
+        return { success: false, error: e.message };
+      }
+    
     case "refreshBanner":
       // Refresh banner in all tabs displaying messages from this sender
       return await refreshBannerForEmail(message.email);

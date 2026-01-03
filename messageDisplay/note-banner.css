@@ -17,6 +17,11 @@
   color: #5d4037;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: relative;
+  cursor: pointer;
+}
+
+.mail-note-banner:hover {
+  background: linear-gradient(180deg, #fff59d 0%, #ffee58 100%);
 }
 
 .mail-note-banner:not(:last-child) {
@@ -53,6 +58,10 @@
     background: linear-gradient(180deg, #4a4000 0%, #3d3500 100%);
     border-bottom-color: #6d5f00;
     color: #fff9c4;
+  }
+  
+  .mail-note-banner:hover {
+    background: linear-gradient(180deg, #5a5000 0%, #4d4500 100%);
   }
   
   .mail-note-match-info {

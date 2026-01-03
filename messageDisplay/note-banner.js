@@ -31,6 +31,15 @@
     const banner = document.createElement('div');
     banner.className = 'mail-note-banner';
     banner.dataset.noteId = noteId;
+    banner.title = 'Click to edit this note';
+    
+    // Add click handler to edit the note
+    banner.addEventListener('click', () => {
+      messenger.runtime.sendMessage({
+        action: 'editNoteFromBanner',
+        noteId: noteId
+      });
+    });
     
     const noteIcon = document.createElement('span');
     noteIcon.className = 'mail-note-icon';
