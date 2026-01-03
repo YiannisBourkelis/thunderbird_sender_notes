@@ -321,7 +321,7 @@ saveBtn.addEventListener('click', async () => {
     });
     
     showStatus('Note saved successfully!', 'success');
-    setTimeout(() => window.close(), 1000);
+    setTimeout(() => window.close(), 400);
   } catch (error) {
     showStatus('Error saving note: ' + error.message, 'error');
   }
@@ -343,7 +343,7 @@ deleteBtn.addEventListener('click', async () => {
       });
       
       showStatus('Note deleted!', 'success');
-      setTimeout(() => window.close(), 1000);
+      setTimeout(() => window.close(), 400);
     } catch (error) {
       showStatus('Error deleting note: ' + error.message, 'error');
     }
