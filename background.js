@@ -1,5 +1,8 @@
 // Background script for Mail Note addon
 
+// Track open note editor windows to avoid duplicates
+const openNoteWindows = new Map(); // key: noteId or email, value: windowId
+
 // Default quick note templates
 const DEFAULT_TEMPLATES = [
   "Important client - always respond within 24 hours! 🔥",
@@ -43,13 +46,10 @@ messenger.menus.onClicked.addListener(async (info, tab) => {
       const message = await messenger.messages.get(messageId);
       const senderEmail = extractEmail(message.author);
       
-      // Open popup to add/edit note
-      await messenger.windows.create({
-        type: "popup",
-        url: `popup/add-note.html?email=${encodeURIComponent(senderEmail)}&author=${encodeURIComponent(message.author)}`,
-        width: 500,
-        height: 500
-      });
+      // Open or focus popup to add/edit note
+      const windowKey = `new-${senderEmail}`;
+      const popupUrl = `popup/add-note.html?email=${encodeURIComponent(senderEmail)}&author=${encodeURIComponent(message.author)}`;
+      await openOrFocusNoteWindow(windowKey, popupUrl);
     }
   } else if (info.menuItemId === "manage-all-notes") {
     // Open manage notes window
@@ -69,6 +69,52 @@ async function openManageNotesWindow(tab = 'notes') {
     await messenger.runtime.openOptionsPage();
   }
 }
+
+// Helper function to open or focus a note editor window
+async function openOrFocusNoteWindow(windowKey, url) {
+  // Check if window is already open
+  if (openNoteWindows.has(windowKey)) {
+    const existingWindowId = openNoteWindows.get(windowKey);
+    try {
+      // Check if window still exists
+      const win = await messenger.windows.get(existingWindowId);
+      if (win) {
+        // Focus the existing window
+        await messenger.windows.update(existingWindowId, { focused: true });
+        return { success: true, focused: true };
+      }
+    } catch (e) {
+      // Window no longer exists, remove from tracking
+      openNoteWindows.delete(windowKey);
+    }
+  }
+  
+  // Create new window
+  const newWindow = await messenger.windows.create({
+    type: "popup",
+    url: url,
+    width: 500,
+    height: 500
+  });
+  
+  // Track the new window
+  if (newWindow && newWindow.id) {
+    openNoteWindows.set(windowKey, newWindow.id);
+  }
+  
+  return { success: true, created: true };
+}
+
+// Clean up tracking when windows are closed
+messenger.windows.onRemoved.addListener((windowId) => {
+  // Remove closed window from tracking
+  for (const [key, id] of openNoteWindows.entries()) {
+    if (id === windowId) {
+      openNoteWindows.delete(key);
+      break;
+    }
+  }
+});
 
 // Register the message display script at startup
 // The script will automatically check for notes when injected into a message display
@@ -137,17 +183,9 @@ messenger.runtime.onMessage.addListener(async (message, sender) => {
       return validatePattern(message.email, message.pattern, message.matchType);
     
     case "openAddNotePopup":
-      let popupUrl = `popup/add-note.html?email=${encodeURIComponent(message.email)}&author=${encodeURIComponent(message.author)}`;
-      if (message.noteId) {
-        popupUrl += `&noteId=${encodeURIComponent(message.noteId)}`;
-      }
-      await messenger.windows.create({
-        type: "popup",
-        url: popupUrl,
-        width: 500,
-        height: 500
-      });
-      return { success: true };
+      const addNoteUrl = `popup/add-note.html?email=${encodeURIComponent(message.email)}&author=${encodeURIComponent(message.author)}${message.noteId ? `&noteId=${encodeURIComponent(message.noteId)}` : ''}`;
+      const addWindowKey = message.noteId || `new-${message.email}`;
+      return await openOrFocusNoteWindow(addWindowKey, addNoteUrl);
     
     case "openManageNotes":
       await openManageNotesWindow();
@@ -166,20 +204,14 @@ messenger.runtime.onMessage.addListener(async (message, sender) => {
       return await checkCurrentMessageNotes(sender.tab?.id);
     
     case "editNoteFromBanner":
-      // Open the edit popup for a note clicked in the banner
+      // Open or focus the edit popup for a note clicked in the banner
       try {
         const data = await messenger.storage.local.get('notes');
         const notes = data.notes || {};
         const noteData = notes[message.noteId];
         if (noteData) {
-          const popupUrl = `popup/add-note.html?email=${encodeURIComponent(noteData.pattern || message.noteId)}&author=${encodeURIComponent(noteData.pattern || message.noteId)}&noteId=${encodeURIComponent(message.noteId)}`;
-          await messenger.windows.create({
-            type: "popup",
-            url: popupUrl,
-            width: 500,
-            height: 500
-          });
-          return { success: true };
+          const editUrl = `popup/add-note.html?email=${encodeURIComponent(noteData.pattern || message.noteId)}&author=${encodeURIComponent(noteData.pattern || message.noteId)}&noteId=${encodeURIComponent(message.noteId)}`;
+          return await openOrFocusNoteWindow(message.noteId, editUrl);
         }
         return { success: false, error: 'Note not found' };
       } catch (e) {
