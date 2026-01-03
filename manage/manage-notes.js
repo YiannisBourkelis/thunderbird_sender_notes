@@ -272,6 +272,13 @@ function renderTemplates() {
     const item = document.createElement('div');
     item.className = 'template-item';
     item.dataset.index = index;
+    item.draggable = true;
+    
+    // Drag handle
+    const dragHandle = document.createElement('div');
+    dragHandle.className = 'drag-handle';
+    dragHandle.textContent = '⠿';
+    dragHandle.title = 'Drag to reorder';
     
     const text = document.createElement('div');
     text.className = 'template-text';
@@ -292,10 +299,79 @@ function renderTemplates() {
     
     actions.appendChild(editBtn);
     actions.appendChild(deleteBtn);
+    item.appendChild(dragHandle);
     item.appendChild(text);
     item.appendChild(actions);
     templatesList.appendChild(item);
+    
+    // Drag events
+    item.addEventListener('dragstart', handleDragStart);
+    item.addEventListener('dragend', handleDragEnd);
+    item.addEventListener('dragover', handleDragOver);
+    item.addEventListener('dragenter', handleDragEnter);
+    item.addEventListener('dragleave', handleDragLeave);
+    item.addEventListener('drop', handleDrop);
   });
+}
+
+// Drag and drop state
+let draggedItem = null;
+let draggedIndex = null;
+
+function handleDragStart(e) {
+  draggedItem = this;
+  draggedIndex = parseInt(this.dataset.index);
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', this.dataset.index);
+}
+
+function handleDragEnd(e) {
+  this.classList.remove('dragging');
+  document.querySelectorAll('.template-item').forEach(item => {
+    item.classList.remove('drag-over');
+  });
+  draggedItem = null;
+  draggedIndex = null;
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(e) {
+  e.preventDefault();
+  if (this !== draggedItem) {
+    this.classList.add('drag-over');
+  }
+}
+
+function handleDragLeave(e) {
+  this.classList.remove('drag-over');
+}
+
+async function handleDrop(e) {
+  e.preventDefault();
+  this.classList.remove('drag-over');
+  
+  const targetIndex = parseInt(this.dataset.index);
+  
+  if (draggedIndex !== null && draggedIndex !== targetIndex) {
+    // Reorder the array
+    const movedTemplate = allTemplates.splice(draggedIndex, 1)[0];
+    allTemplates.splice(targetIndex, 0, movedTemplate);
+    
+    // Save to storage
+    await messenger.runtime.sendMessage({
+      action: 'saveTemplates',
+      templates: allTemplates
+    });
+    
+    // Re-render
+    renderTemplates();
+    showStatus('Template order updated.', 'success');
+  }
 }
 
 // Start editing a template

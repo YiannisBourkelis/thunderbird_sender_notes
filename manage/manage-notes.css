@@ -408,6 +408,36 @@ button.btn-small {
   border: 1px solid #ced4da;
   border-radius: 6px;
   gap: 12px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.template-item.dragging {
+  opacity: 0.5;
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.template-item.drag-over {
+  border-color: #0060df;
+  border-style: dashed;
+  background: #f0f7ff;
+}
+
+.drag-handle {
+  cursor: grab;
+  color: #999;
+  font-size: 18px;
+  padding: 0 4px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.drag-handle:hover {
+  color: #666;
+}
+
+.template-item.dragging .drag-handle {
+  cursor: grabbing;
 }
 
 .template-item.editing {
@@ -445,6 +475,19 @@ button.btn-small {
     background: #38383d;
     border-color: #5b5b66;
     color: #fbfbfe;
+  }
+  
+  .template-item.drag-over {
+    border-color: #45a1ff;
+    background: #2b3d4f;
+  }
+  
+  .drag-handle {
+    color: #8a8a8f;
+  }
+  
+  .drag-handle:hover {
+    color: #b1b1b3;
   }
   
   #new-template-input,
