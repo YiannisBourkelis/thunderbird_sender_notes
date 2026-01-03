@@ -340,8 +340,10 @@ async function saveNote(existingNoteId, pattern, matchType, note) {
     };
   }
   
-  // If we have an existing note ID, delete the old entry first (in case pattern/matchType changed)
+  // Preserve the original createdAt date if updating an existing note
+  let originalCreatedAt = null;
   if (existingNoteId && notes[existingNoteId]) {
+    originalCreatedAt = notes[existingNoteId].createdAt;
     delete notes[existingNoteId];
   }
   
@@ -352,7 +354,7 @@ async function saveNote(existingNoteId, pattern, matchType, note) {
     pattern: pattern.toLowerCase(),
     matchType: matchType,
     note: note,
-    createdAt: notes[noteId]?.createdAt || now,
+    createdAt: originalCreatedAt || now,
     updatedAt: now
   };
   

@@ -22,6 +22,9 @@ const templateList = document.getElementById('template-list');
 const newTemplateInput = document.getElementById('new-template');
 const addTemplateBtn = document.getElementById('add-template-btn');
 const closeModalBtn = document.getElementById('close-modal-btn');
+const noteDatesDiv = document.getElementById('note-dates');
+const dateCreatedSpan = document.getElementById('date-created');
+const dateUpdatedSpan = document.getElementById('date-updated');
 
 let templates = [];
 let existingNoteId = null;
@@ -59,6 +62,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     noteTextarea.value = existingNote.note;
     existingNoteId = existingNote.id;
     deleteBtn.style.display = 'inline-block';
+    
+    // Display dates
+    if (existingNote.createdAt || existingNote.updatedAt) {
+      noteDatesDiv.style.display = 'block';
+      if (existingNote.createdAt) {
+        dateCreatedSpan.textContent = `Created: ${formatDateTime(existingNote.createdAt)}`;
+      }
+      if (existingNote.updatedAt) {
+        dateUpdatedSpan.textContent = `Updated: ${formatDateTime(existingNote.updatedAt)}`;
+      }
+    }
   }
   
   // Update preview initially
@@ -85,6 +99,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   noteTextarea.focus();
 });
+
+// Format date/time for display
+function formatDateTime(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
 
 // Suggest pattern based on match type
 function suggestPattern() {
