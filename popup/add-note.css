@@ -103,23 +103,22 @@ h2 {
   color: #721c24;
 }
 
-/* Custom Note Header with dropdown */
-.custom-note-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.custom-note-header label {
-  font-weight: 500;
-  margin: 0;
+/* Textarea container for floating button */
+.textarea-container {
+  position: relative;
 }
 
 /* Dropdown */
 .dropdown {
   position: relative;
   display: inline-block;
+}
+
+.floating-dropdown {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 10;
 }
 
 .dropdown-btn {
@@ -138,6 +137,16 @@ h2 {
   border-color: #a8c7fa;
 }
 
+.floating-btn {
+  opacity: 0.7;
+  background: rgba(232, 240, 254, 0.9);
+}
+
+.floating-btn:hover {
+  opacity: 1;
+  background: #d2e3fc;
+}
+
 .dropdown-content {
   display: none;
   position: absolute;
@@ -153,6 +162,11 @@ h2 {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 100;
   margin-top: 4px;
+}
+
+.dropdown-content.dropdown-right {
+  left: auto;
+  right: 0;
 }
 
 .dropdown-content.show {
@@ -243,6 +257,7 @@ h2 {
 textarea {
   width: 100%;
   padding: 10px;
+  padding-right: 40px; /* Space for floating button */
   border: 1px solid #cdcdcd;
   border-radius: 4px;
   font-family: inherit;

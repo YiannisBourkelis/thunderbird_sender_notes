@@ -30,20 +30,19 @@
     
     <!-- Note Section -->
     <div class="form-group">
-      <div class="custom-note-header">
-        <div class="dropdown">
-          <button id="quick-note-dropdown-btn" class="dropdown-btn" title="Quick Notes">📝</button>
-          <div id="quick-note-dropdown" class="dropdown-content">
-            <!-- Quick notes will be inserted here -->
-          </div>
-        </div>
-        <label for="note-text">Note:</label>
-      </div>
-      
       <!-- Horizontal scrolling tag cloud -->
       <div id="quick-notes-tags" class="quick-notes-tags"></div>
       
-      <textarea id="note-text" placeholder="Enter your note about this sender..." rows="3"></textarea>
+      <!-- Textarea with floating dropdown button -->
+      <div class="textarea-container">
+        <textarea id="note-text" placeholder="Enter your note about this sender..." rows="3"></textarea>
+        <div class="dropdown floating-dropdown">
+          <button id="quick-note-dropdown-btn" class="dropdown-btn floating-btn" title="Quick Notes Templates">📝</button>
+          <div id="quick-note-dropdown" class="dropdown-content dropdown-right">
+            <!-- Quick notes will be inserted here -->
+          </div>
+        </div>
+      </div>
     </div>
     
     <!-- Note Dates (shown only for existing notes) -->
