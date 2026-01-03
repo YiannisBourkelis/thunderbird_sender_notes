@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load templates
   await loadTemplates();
   
-  // Load existing note - by ID if provided, otherwise find matching
+  // Load existing note - only by ID if provided
   let existingNote = null;
   
   if (noteIdParam) {
@@ -48,12 +48,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (allNotes && allNotes[noteIdParam]) {
       existingNote = { ...allNotes[noteIdParam], id: noteIdParam };
     }
-  } else {
-    // Find first matching note
-    existingNote = await messenger.runtime.sendMessage({
-      action: 'findMatchingNote',
-      email: senderEmail
-    });
   }
   
   if (existingNote) {
