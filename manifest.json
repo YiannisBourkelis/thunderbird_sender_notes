@@ -12,8 +12,8 @@
     }
   },
   "icons": {
-    "48": "icons/icon-48.svg",
-    "96": "icons/icon-96.svg"
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png"
   },
   "permissions": [
     "storage",
@@ -27,8 +27,8 @@
   "message_display_action": {
     "default_title": "__MSG_viewNoteTitle__",
     "default_icon": {
-      "16": "icons/icon-48.svg",
-      "32": "icons/icon-48.svg"
+      "16": "icons/icon-48.png",
+      "32": "icons/icon-48.png"
     },
     "default_popup": "popup/view-note.html"
   },
