@@ -376,6 +376,51 @@
     "description": "About section license text"
   },
   
+  "welcomeTitle": {
+    "message": "Welcome to Sender Notes!",
+    "description": "Welcome page title"
+  },
+  "welcomeSubtitle": {
+    "message": "Add notes to email senders. Notes are displayed as a banner when viewing emails.",
+    "description": "Welcome page subtitle"
+  },
+  "welcomeSelectLanguage": {
+    "message": "Select Your Language",
+    "description": "Welcome page language section title"
+  },
+  "welcomeLanguageDesc": {
+    "message": "Choose your preferred language for the addon interface:",
+    "description": "Welcome page language description"
+  },
+  "welcomeAutoDetect": {
+    "message": "Auto-detect",
+    "description": "Welcome page auto-detect option"
+  },
+  "welcomeAutoDetectDesc": {
+    "message": "Use Thunderbird's language",
+    "description": "Welcome page auto-detect description"
+  },
+  "welcomeGettingStarted": {
+    "message": "Getting Started",
+    "description": "Welcome page getting started section"
+  },
+  "welcomeStep1": {
+    "message": "Right-click on any email in your inbox",
+    "description": "Welcome page step 1"
+  },
+  "welcomeStep2": {
+    "message": "Select \"Add Note to Sender\" from the menu",
+    "description": "Welcome page step 2"
+  },
+  "welcomeStep3": {
+    "message": "Your note will appear as a banner when viewing emails from that sender",
+    "description": "Welcome page step 3"
+  },
+  "welcomeGetStarted": {
+    "message": "Get Started",
+    "description": "Welcome page button"
+  },
+  
   "templateImportantClient": {
     "message": "Important client - always respond within 24 hours! 🔥",
     "description": "Default template"

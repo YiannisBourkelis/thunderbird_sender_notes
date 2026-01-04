@@ -22,11 +22,16 @@ function getDefaultTemplates() {
 // Initialize storage on first install
 messenger.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === "install") {
+    // Only initialize notes storage - templates will be set after welcome page language selection
     await messenger.storage.local.set({ 
-      notes: {},
-      templates: getDefaultTemplates()
+      notes: {}
     });
     console.log("Mail Note addon installed successfully");
+    
+    // Open welcome page for language selection
+    await messenger.tabs.create({
+      url: messenger.runtime.getURL('welcome/welcome.html')
+    });
   }
 });
 
