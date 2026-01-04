@@ -530,6 +530,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Wait for i18n to load custom messages
   await i18nReady;
   
+  // Load version from manifest
+  const manifest = messenger.runtime.getManifest();
+  const versionEl = document.getElementById('about-version');
+  if (versionEl && manifest.version) {
+    versionEl.textContent = `v${manifest.version}`;
+  }
+  
   // Load notes
   loadNotes();
   
@@ -539,6 +546,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Check for hash to switch tab
   if (window.location.hash === '#templates') {
     switchTab('templates');
+  } else if (window.location.hash === '#about') {
+    switchTab('about');
   }
   
   // Tab switching

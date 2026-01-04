@@ -133,6 +133,10 @@
     "message": "Settings",
     "description": "Settings tab label"
   },
+  "tabAbout": {
+    "message": "About",
+    "description": "About tab label"
+  },
   "searchNotes": {
     "message": "Search notes...",
     "description": "Search placeholder"
@@ -341,5 +345,34 @@
   "save": {
     "message": "Save",
     "description": "Save button"
+  },
+  
+  "aboutDeveloper": {
+    "message": "Developer",
+    "description": "About section developer label"
+  },
+  "aboutLicense": {
+    "message": "License",
+    "description": "About section license label"
+  },
+  "aboutGitHub": {
+    "message": "GitHub Repository",
+    "description": "About section GitHub link"
+  },
+  "aboutReportIssue": {
+    "message": "Report an Issue",
+    "description": "About section issue link"
+  },
+  "aboutContribute": {
+    "message": "Contribute",
+    "description": "About section contribute link"
+  },
+  "aboutThanks": {
+    "message": "Thank you for using Sender Notes!",
+    "description": "About section thank you message"
+  },
+  "aboutLicensedUnder": {
+    "message": "Licensed under",
+    "description": "About section license text"
   }
 }

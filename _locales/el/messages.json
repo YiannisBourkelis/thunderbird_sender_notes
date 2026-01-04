@@ -1,6 +1,6 @@
 {
   "extensionName": {
-    "message": "Σημειώσεις Αποστολέα"
+    "message": "Sender Notes"
   },
   "extensionDescription": {
     "message": "Προσθέστε σημειώσεις σε αποστολείς email. Οι σημειώσεις εμφανίζονται ως banner κατά την προβολή emails από τον αποστολέα."
@@ -99,6 +99,9 @@
   },
   "tabSettings": {
     "message": "Ρυθμίσεις"
+  },
+  "tabAbout": {
+    "message": "Σχετικά"
   },
   "searchNotes": {
     "message": "Αναζήτηση σημειώσεων..."
@@ -263,5 +266,27 @@
   },
   "save": {
     "message": "Αποθήκευση"
+  },
+  
+  "aboutDeveloper": {
+    "message": "Προγραμματιστής"
+  },
+  "aboutLicense": {
+    "message": "Άδεια Χρήσης"
+  },
+  "aboutGitHub": {
+    "message": "Αποθετήριο GitHub"
+  },
+  "aboutReportIssue": {
+    "message": "Αναφορά Προβλήματος"
+  },
+  "aboutContribute": {
+    "message": "Συνεισφορά"
+  },
+  "aboutThanks": {
+    "message": "Ευχαριστούμε που χρησιμοποιείτε το Sender Notes!"
+  },
+  "aboutLicensedUnder": {
+    "message": "Υπό άδεια"
   }
 }
