@@ -82,7 +82,7 @@ Notes appear as non-intrusive banners at the top of the message pane:
 
 ### Manual Installation
 
-1. Download the latest `.xpi` file from [Releases](https://github.com/yourusername/thunderbird_sender_notes/releases)
+1. Download the latest `.xpi` file from [Releases](https://github.com/YiannisBourkelis/thunderbird-sender-notes/releases)
 2. Open Thunderbird
 3. Go to **Tools** → **Add-ons and Themes**
 4. Click the gear icon ⚙️ → **Install Add-on From File...**
@@ -91,8 +91,8 @@ Notes appear as non-intrusive banners at the top of the message pane:
 ### For Development
 
 ```bash
-git clone https://github.com/yourusername/thunderbird_sender_notes.git
-cd thunderbird_sender_notes
+git clone https://github.com/YiannisBourkelis/thunderbird-sender-notes.git
+cd thunderbird-sender-notes
 ```
 
 Then in Thunderbird:
@@ -248,4 +248,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Made by [Yiannis](https://github.com/yourusername)**
+**Made by [Yiannis](https://github.com/YiannisBourkelis)**
