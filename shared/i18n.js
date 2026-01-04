@@ -72,14 +72,6 @@ function i18n(key, substitutions) {
 }
 
 async function translatePage() {
-  // Load custom language if set
-  const { settings = {} } = await messenger.storage.local.get('settings');
-  currentLanguage = settings.language || 'auto';
-  
-  if (currentLanguage !== 'auto') {
-    await loadMessages(currentLanguage);
-  }
-  
   // Translate text content
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
@@ -127,9 +119,20 @@ async function translatePage() {
   });
 }
 
-// Run translation when DOM is ready
+// Promise that resolves when i18n is ready
+const i18nReady = (async function() {
+  // Load custom language if set
+  const { settings = {} } = await messenger.storage.local.get('settings');
+  currentLanguage = settings.language || 'auto';
+  
+  if (currentLanguage !== 'auto') {
+    await loadMessages(currentLanguage);
+  }
+})();
+
+// Run page translation when DOM is ready
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => translatePage());
+  document.addEventListener('DOMContentLoaded', () => i18nReady.then(translatePage));
 } else {
-  translatePage();
+  i18nReady.then(translatePage);
 }

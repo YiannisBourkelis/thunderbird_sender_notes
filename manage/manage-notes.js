@@ -186,8 +186,8 @@ function renderNotes() {
       <td class="date-cell">${formatDate(note.createdAt)}</td>
       <td class="date-cell">${formatDate(note.updatedAt)}</td>
       <td class="action-buttons">
-        <button class="btn-small primary edit-btn">Edit</button>
-        <button class="btn-small danger delete-btn">Delete</button>
+        <button class="btn-small primary edit-btn">${i18n('edit')}</button>
+        <button class="btn-small danger delete-btn">${i18n('delete')}</button>
       </td>
     `;
     
@@ -325,12 +325,12 @@ function renderTemplates() {
     
     const editBtn = document.createElement('button');
     editBtn.className = 'btn-small primary';
-    editBtn.textContent = 'Edit';
+    editBtn.textContent = i18n('edit');
     editBtn.addEventListener('click', () => startEditTemplate(index, template, item));
     
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn-small danger';
-    deleteBtn.textContent = 'Delete';
+    deleteBtn.textContent = i18n('delete');
     deleteBtn.addEventListener('click', () => deleteTemplate(index));
     
     actions.appendChild(editBtn);
@@ -425,12 +425,12 @@ function startEditTemplate(index, currentText, itemElement) {
   
   const saveBtn = document.createElement('button');
   saveBtn.className = 'btn-small primary';
-  saveBtn.textContent = 'Save';
+  saveBtn.textContent = i18n('save');
   saveBtn.addEventListener('click', () => saveEditTemplate(index, textarea.value));
   
   const cancelBtn = document.createElement('button');
   cancelBtn.className = 'btn-small';
-  cancelBtn.textContent = 'Cancel';
+  cancelBtn.textContent = i18n('cancel');
   cancelBtn.style.background = '#6c757d';
   cancelBtn.style.color = 'white';
   cancelBtn.addEventListener('click', () => renderTemplates());
@@ -525,8 +525,11 @@ function switchTab(tabName) {
 
 // =============== INITIALIZATION ===============
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize - wait for i18n to be ready first
+document.addEventListener('DOMContentLoaded', async () => {
+  // Wait for i18n to load custom messages
+  await i18nReady;
+  
   // Load notes
   loadNotes();
   

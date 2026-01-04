@@ -147,6 +147,9 @@ function renderNotesList(notes) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
+  // Wait for i18n to load custom messages
+  await i18nReady;
+  
   console.log("Mail Note: view-note.js loaded");
   
   try {

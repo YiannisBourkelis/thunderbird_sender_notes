@@ -28,6 +28,9 @@ let existingNoteId = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
+  // Wait for i18n to load custom messages
+  await i18nReady;
+  
   senderEmailSpan.textContent = senderEmail;
   
   // Set default pattern to the full email
