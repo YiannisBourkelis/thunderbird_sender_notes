@@ -204,41 +204,175 @@ class IndexedDBAdapter {
   // ==================== Templates ====================
   
   /**
-   * Get all templates
-   * @returns {Promise<string[]>}
+   * Generate a unique ID for templates
+   * @returns {string}
+   */
+  _generateTemplateId() {
+    return 'tpl_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
+  }
+
+  /**
+   * Get all templates ordered by their order field
+   * @returns {Promise<Template[]>}
    */
   async getTemplates() {
     const db = await this.openDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction('templates', 'readonly');
       const store = tx.objectStore('templates');
-      const request = store.get('default');
+      const request = store.getAll();
       
       request.onsuccess = () => {
-        resolve(request.result?.templates || []);
+        const templates = request.result || [];
+        // Sort by order field
+        templates.sort((a, b) => (a.order || 0) - (b.order || 0));
+        resolve(templates);
       };
       request.onerror = () => reject(request.error);
     });
   }
   
   /**
-   * Save templates
-   * @param {string[]} templates 
-   * @returns {Promise<void>}
+   * Get a single template by ID
+   * @param {string} id 
+   * @returns {Promise<Template|null>}
    */
-  async saveTemplates(templates) {
+  async getTemplateById(id) {
+    const db = await this.openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('templates', 'readonly');
+      const store = tx.objectStore('templates');
+      const request = store.get(id);
+      
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error);
+    });
+  }
+  
+  /**
+   * Add a new template
+   * @param {string} text - Template content
+   * @returns {Promise<Template>} The created template
+   */
+  async addTemplate(text) {
+    const db = await this.openDB();
+    
+    // Get current max order
+    const templates = await this.getTemplates();
+    const maxOrder = templates.reduce((max, t) => Math.max(max, t.order || 0), 0);
+    
+    const template = {
+      id: this._generateTemplateId(),
+      text: text,
+      order: maxOrder + 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('templates', 'readwrite');
+      const store = tx.objectStore('templates');
+      const request = store.put(template);
+      
+      request.onsuccess = () => resolve(template);
+      request.onerror = () => reject(request.error);
+    });
+  }
+  
+  /**
+   * Update a single template's text
+   * @param {string} id 
+   * @param {string} text - New template content
+   * @returns {Promise<Template>} The updated template
+   */
+  async updateTemplate(id, text) {
+    const existing = await this.getTemplateById(id);
+    if (!existing) {
+      throw new Error(`Template not found: ${id}`);
+    }
+    
+    const updated = {
+      ...existing,
+      text: text,
+      updatedAt: new Date().toISOString()
+    };
+    
     const db = await this.openDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction('templates', 'readwrite');
       const store = tx.objectStore('templates');
-      const request = store.put({ id: 'default', templates });
+      const request = store.put(updated);
+      
+      request.onsuccess = () => resolve(updated);
+      request.onerror = () => reject(request.error);
+    });
+  }
+  
+  /**
+   * Delete a single template
+   * @param {string} id 
+   * @returns {Promise<void>}
+   */
+  async deleteTemplate(id) {
+    const db = await this.openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('templates', 'readwrite');
+      const store = tx.objectStore('templates');
+      const request = store.delete(id);
       
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
   }
   
-  // ==================== Settings ====================
+  /**
+   * Move a template to a new position
+   * @param {string} id - Template ID to move
+   * @param {string|null} afterId - ID of template to place after, or null to move to first position
+   * @returns {Promise<void>}
+   */
+  async moveTemplate(id, afterId) {
+    const templates = await this.getTemplates();
+    
+    // Find current position
+    const currentIndex = templates.findIndex(t => t.id === id);
+    if (currentIndex === -1) return;
+    
+    // Remove from current position
+    const [movedTemplate] = templates.splice(currentIndex, 1);
+    
+    // Find target position
+    let targetIndex;
+    if (afterId === null) {
+      targetIndex = 0; // Move to first
+    } else {
+      const afterIndex = templates.findIndex(t => t.id === afterId);
+      targetIndex = afterIndex === -1 ? templates.length : afterIndex + 1;
+    }
+    
+    // Insert at new position
+    templates.splice(targetIndex, 0, movedTemplate);
+    
+    // Update order fields for all templates
+    const db = await this.openDB();
+    const now = new Date().toISOString();
+    
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('templates', 'readwrite');
+      const store = tx.objectStore('templates');
+      
+      templates.forEach((template, index) => {
+        template.order = index;
+        template.updatedAt = now;
+        store.put(template);
+      });
+      
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+  
+  // ==================== Settings ======================================
   
   /**
    * Get settings object

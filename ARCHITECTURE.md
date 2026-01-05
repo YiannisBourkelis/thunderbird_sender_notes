@@ -98,9 +98,13 @@ The base interface that all storage backends must implement.
 │  + findNotesByEmail(email) → Note[]      │
 │  + findDuplicate(pattern, type) → Note   │
 ├──────────────────────────────────────────┤
-│  Templates:                              │
-│  + getTemplates() → string[]             │
-│  + saveTemplates(templates) → void       │
+│  Templates (Granular CRUD):              │
+│  + getTemplates() → Template[]           │
+│  + getTemplateById(id) → Template|null   │
+│  + addTemplate(text) → Template          │
+│  + updateTemplate(id, text) → Template   │
+│  + deleteTemplate(id) → void             │
+│  + moveTemplate(id, beforeId) → void     │
 ├──────────────────────────────────────────┤
 │  Settings:                               │
 │  + getSettings() → Object                │
@@ -114,6 +118,24 @@ The base interface that all storage backends must implement.
     │  Adapter    │      │  Adapter    │
     └─────────────┘      └─────────────┘
 ```
+
+#### Template Object Structure
+
+```javascript
+/**
+ * @typedef {Object} Template
+ * @property {string} id        - Unique identifier (UUID)
+ * @property {string} text      - The template content
+ * @property {number} order     - Sort order (0-based)
+ * @property {string} createdAt - ISO 8601 timestamp
+ * @property {string} updatedAt - ISO 8601 timestamp
+ */
+```
+
+This granular API supports:
+- **Individual operations** for multi-user/client-server compatibility
+- **Atomic reordering** via `moveTemplate(id, afterId)` - `afterId=null` moves to first
+- **Optimistic UI updates** with eventual consistency
 
 ### 2. IndexedDBAdapter (Current Implementation)
 
@@ -132,11 +154,15 @@ Uses browser's IndexedDB for local persistent storage.
 │  │                 │  │                 │  │                 │ │
 │  │ keyPath: 'id'   │  │ keyPath: 'id'   │  │ keyPath: 'id'   │ │
 │  │                 │  │                 │  │                 │ │
-│  │ Indexes:        │  │                 │  │                 │ │
-│  │ • pattern       │  │                 │  │                 │ │
+│  │ Indexes:        │  │ Indexes:        │  │                 │ │
+│  │ • pattern       │  │ • order         │  │                 │ │
 │  │ • matchType     │  │                 │  │                 │ │
-│  │ • [pattern,     │  │                 │  │                 │ │
-│  │    matchType]   │  │                 │  │                 │ │
+│  │ • [pattern,     │  │ Template:       │  │                 │ │
+│  │    matchType]   │  │ • id (UUID)     │  │                 │ │
+│  │                 │  │ • text          │  │                 │ │
+│  │                 │  │ • order         │  │                 │ │
+│  │                 │  │ • createdAt     │  │                 │ │
+│  │                 │  │ • updatedAt     │  │                 │ │
 │  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
 │                                                                 │
 │  ┌─────────────────┐                                           │
@@ -168,12 +194,13 @@ Provides a single API for all data operations, delegating to the configured adap
 │  │     Notes       │  │   Templates     │  │  Settings   │ │
 │  │                 │  │                 │  │             │ │
 │  │ getAll()        │  │ getTemplates()  │  │ getAll()    │ │
-│  │ getById(id)     │  │ saveTemplates() │  │ save()      │ │
-│  │ save(note)      │  │                 │  │             │ │
-│  │ delete(id)      │  └─────────────────┘  └─────────────┘ │
-│  │ findByEmail()   │                                       │
-│  │ findDuplicate() │                                       │
-│  └─────────────────┘                                       │
+│  │ getById(id)     │  │ getTemplates    │  │ save()      │ │
+│  │ save(note)      │  │   AsStrings()   │  │             │ │
+│  │ delete(id)      │  │ addTemplate()   │  └─────────────┘ │
+│  │ findByEmail()   │  │ updateTemplate()│                   │
+│  │ findDuplicate() │  │ deleteTemplate()│                   │
+│  └─────────────────┘  │ moveTemplate()  │                   │
+│                       └─────────────────┘                   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -284,19 +311,13 @@ const DB_SCHEMA = {
   1: {
     description: 'Initial schema with notes, templates, settings, and migrations',
     stores: [
-      { name: 'notes', keyPath: 'id', indexes: [...] },
-      { name: 'templates', keyPath: 'id' },
+      { name: 'notes', keyPath: 'id', indexes: ['pattern', 'matchType', ...] },
+      { name: 'templates', keyPath: 'id', indexes: ['order'] },
       { name: 'settings', keyPath: 'id' },
       { name: 'migrations', keyPath: 'id' }
     ]
-  },
-  // Future versions add modifications
-  2: {
-    description: 'Add tags to notes',
-    modifications: [
-      { store: 'notes', addIndex: { name: 'tags', keyPath: 'tags', options: { multiEntry: true } } }
-    ]
   }
+  // Future versions add modifications
 };
 ```
 
@@ -309,7 +330,7 @@ const DB_SCHEMA = {
 │                                                                     │
 │  ┌──────────┐                                                       │
 │  │ Open DB  │                                                       │
-│  │ v2       │                                                       │
+│  │ v1       │                                                       │
 │  └────┬─────┘                                                       │
 │       │                                                             │
 │       ▼                                                             │
@@ -391,23 +412,20 @@ Data migrations handle transformations of existing data when the schema changes.
 ```javascript
 // storage/migrations.js
 
-const ALL_MIGRATIONS = [
-  {
-    id: '001_normalize_email_patterns',
-    description: 'Convert all patterns to lowercase',
-    async up(adapter) {
-      const notes = await adapter.getAllNotes();
-      for (const note of Object.values(notes)) {
-        if (note.pattern !== note.pattern.toLowerCase()) {
-          note.pattern = note.pattern.toLowerCase();
-          await adapter.saveNote(note);
-        }
-      }
-    },
-    async down(adapter) {
-      // Rollback logic (optional)
-    }
-  }
+const MIGRATIONS = [
+  // Example migration structure:
+  // {
+  //   id: '001_example_migration',
+  //   description: 'Description of what this migration does',
+  //   async up(adapter) {
+  //     // Transform data using adapter methods
+  //     const notes = await adapter.getAllNotes();
+  //     for (const note of Object.values(notes)) {
+  //       // ... modify note ...
+  //       await adapter.saveNote(note);
+  //     }
+  //   }
+  // }
 ];
 ```
 
@@ -418,13 +436,7 @@ const ALL_MIGRATIONS = [
 │                    'migrations' Object Store                    │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  { id: '001_normalize_email_patterns',                          │
-│    appliedAt: '2026-01-05T10:30:00Z',                          │
-│    success: true }                                              │
-│                                                                 │
-│  { id: '002_add_created_timestamps',                            │
-│    appliedAt: '2026-01-05T10:30:01Z',                          │
-│    success: true }                                              │
+│  (Records applied migrations with id, appliedAt, success)       │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```

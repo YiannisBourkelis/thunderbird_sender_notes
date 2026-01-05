@@ -37,7 +37,9 @@ const DB_SCHEMA = {
         {
           name: 'templates',
           keyPath: 'id',
-          indexes: []
+          indexes: [
+            { name: 'order', keyPath: 'order', unique: false }
+          ]
         },
         {
           name: 'settings',
@@ -52,10 +54,6 @@ const DB_SCHEMA = {
     //   description: 'Add categories store',
     //   stores: [
     //     { name: 'categories', keyPath: 'id', indexes: [] }
-    //   ],
-    //   // Optional: modify existing stores
-    //   modifications: [
-    //     { store: 'notes', addIndex: { name: 'categoryId', keyPath: 'categoryId', unique: false } }
     //   ]
     // }
   }

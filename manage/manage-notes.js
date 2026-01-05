@@ -308,6 +308,9 @@ function renderTemplates() {
     const item = document.createElement('div');
     item.className = 'template-item';
     item.dataset.index = index;
+    if (template.id) {
+      item.dataset.id = template.id;
+    }
     item.draggable = true;
     
     // Drag handle
@@ -318,7 +321,7 @@ function renderTemplates() {
     
     const text = document.createElement('div');
     text.className = 'template-text';
-    text.textContent = template;
+    text.textContent = template.text;
     
     const actions = document.createElement('div');
     actions.className = 'template-actions';
@@ -326,12 +329,12 @@ function renderTemplates() {
     const editBtn = document.createElement('button');
     editBtn.className = 'btn-small primary';
     editBtn.textContent = i18n('edit');
-    editBtn.addEventListener('click', () => startEditTemplate(index, template, item));
+    editBtn.addEventListener('click', () => startEditTemplate(template, item));
     
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn-small danger';
     deleteBtn.textContent = i18n('delete');
-    deleteBtn.addEventListener('click', () => deleteTemplate(index));
+    deleteBtn.addEventListener('click', () => deleteTemplate(template));
     
     actions.appendChild(editBtn);
     actions.appendChild(deleteBtn);
@@ -394,24 +397,70 @@ async function handleDrop(e) {
   const targetIndex = parseInt(this.dataset.index);
   
   if (draggedIndex !== null && draggedIndex !== targetIndex) {
-    // Reorder the array
-    const movedTemplate = allTemplates.splice(draggedIndex, 1)[0];
-    allTemplates.splice(targetIndex, 0, movedTemplate);
+    const movedTemplate = allTemplates[draggedIndex];
     
-    // Save to storage
+    // Check if we're working with unsaved defaults
+    if (movedTemplate.isDefault) {
+      // Convert defaults to saved templates - save them all with addTemplate
+      for (let i = 0; i < allTemplates.length; i++) {
+        const t = allTemplates[i];
+        if (t.isDefault) {
+          await messenger.runtime.sendMessage({
+            action: 'addTemplate',
+            text: t.text
+          });
+        }
+      }
+      // Reload to get real IDs, then call handleDrop logic again
+      await loadTemplates();
+      // Now reorder with real IDs - find the template by matching text
+      const freshTemplates = allTemplates;
+      const movedText = movedTemplate.text;
+      const movedFresh = freshTemplates.find(t => t.text === movedText);
+      if (movedFresh) {
+        const afterId = targetIndex === 0 ? null : freshTemplates[targetIndex - 1]?.id || null;
+        await messenger.runtime.sendMessage({
+          action: 'moveTemplate',
+          id: movedFresh.id,
+          afterId: afterId
+        });
+        await loadTemplates();
+      }
+      showStatus(i18n('templateOrderUpdated'), 'success');
+      return;
+    }
+    
+    // Calculate afterId based on drop position
+    // When dropping ON an item, we want to insert at that position
+    // afterId is the ID of the item that should be directly BEFORE us after the move
+    let afterId;
+    if (targetIndex === 0) {
+      // Moving to first position
+      afterId = null;
+    } else if (draggedIndex < targetIndex) {
+      // Dragging DOWN: after we remove the dragged item, target shifts up by 1
+      // So we want to be after the item currently AT targetIndex
+      afterId = allTemplates[targetIndex].id;
+    } else {
+      // Dragging UP: positions don't shift, we want to be after item at targetIndex-1
+      afterId = allTemplates[targetIndex - 1].id;
+    }
+    
     await messenger.runtime.sendMessage({
-      action: 'saveTemplates',
-      templates: allTemplates
+      action: 'moveTemplate',
+      id: movedTemplate.id,
+      afterId: afterId
     });
     
-    // Re-render
-    renderTemplates();
+    // Reload to get fresh data
+    await loadTemplates();
     showStatus(i18n('templateOrderUpdated'), 'success');
   }
 }
 
 // Start editing a template
-function startEditTemplate(index, currentText, itemElement) {
+function startEditTemplate(template, itemElement) {
+  const currentText = template.text;
   itemElement.classList.add('editing');
   itemElement.innerHTML = '';
   
@@ -426,7 +475,7 @@ function startEditTemplate(index, currentText, itemElement) {
   const saveBtn = document.createElement('button');
   saveBtn.className = 'btn-small primary';
   saveBtn.textContent = i18n('save');
-  saveBtn.addEventListener('click', () => saveEditTemplate(index, textarea.value));
+  saveBtn.addEventListener('click', () => saveEditTemplate(template, textarea.value));
   
   const cancelBtn = document.createElement('button');
   cancelBtn.className = 'btn-small';
@@ -444,7 +493,7 @@ function startEditTemplate(index, currentText, itemElement) {
 }
 
 // Save edited template
-async function saveEditTemplate(index, newText) {
+async function saveEditTemplate(template, newText) {
   const text = newText.trim();
   if (!text) {
     showStatus(i18n('templateEmpty'), 'error');
@@ -452,11 +501,20 @@ async function saveEditTemplate(index, newText) {
   }
   
   try {
-    await messenger.runtime.sendMessage({
-      action: 'updateTemplate',
-      index: index,
-      template: text
-    });
+    // Check if this is a default (unsaved) template
+    if (template.isDefault) {
+      // Need to save as new template first
+      await messenger.runtime.sendMessage({
+        action: 'addTemplate',
+        text: text
+      });
+    } else {
+      await messenger.runtime.sendMessage({
+        action: 'updateTemplate',
+        id: template.id,
+        text: text
+      });
+    }
     
     showStatus(i18n('templateUpdated'), 'success');
     await loadTemplates();
@@ -477,7 +535,7 @@ async function addTemplate() {
   try {
     await messenger.runtime.sendMessage({
       action: 'addTemplate',
-      template: text
+      text: text
     });
     
     newTemplateInput.value = '';
@@ -490,16 +548,30 @@ async function addTemplate() {
 }
 
 // Delete template
-async function deleteTemplate(index) {
+async function deleteTemplate(template) {
   if (!confirm(i18n('confirmDelete'))) {
     return;
   }
   
   try {
-    await messenger.runtime.sendMessage({
-      action: 'deleteTemplate',
-      index: index
-    });
+    // Check if this is a default (unsaved) template
+    if (template.isDefault) {
+      // For default templates, save all EXCEPT the one being deleted
+      const remaining = allTemplates.filter(t => t !== template);
+      for (const t of remaining) {
+        if (t.isDefault) {
+          await messenger.runtime.sendMessage({
+            action: 'addTemplate',
+            text: t.text
+          });
+        }
+      }
+    } else {
+      await messenger.runtime.sendMessage({
+        action: 'deleteTemplate',
+        id: template.id
+      });
+    }
     
     showStatus(i18n('templateDeleted'), 'success');
     await loadTemplates();

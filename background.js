@@ -48,7 +48,6 @@ const openNoteWindows = new Map(); // key: noteId or email, value: windowId
 
 function getDefaultTemplates() {
   return [
-    messenger.i18n.getMessage("templateVipPrioritize"),
     messenger.i18n.getMessage("templateImportantClient"),
     messenger.i18n.getMessage("templatePotentialSpam"),
     messenger.i18n.getMessage("templateSpam"),
@@ -253,17 +252,20 @@ messenger.runtime.onMessage.addListener(async (message, sender) => {
     case "getTemplates":
       return await repo.getTemplates();
     
-    case "saveTemplates":
-      return await repo.saveTemplates(message.templates);
+    case "getTemplatesAsStrings":
+      return await repo.getTemplatesAsStrings();
     
     case "addTemplate":
-      return await repo.addTemplate(message.template);
+      return await repo.addTemplate(message.text);
     
     case "updateTemplate":
-      return await repo.updateTemplate(message.index, message.template);
+      return await repo.updateTemplate(message.id, message.text);
     
     case "deleteTemplate":
-      return await repo.deleteTemplate(message.index);
+      return await repo.deleteTemplate(message.id);
+    
+    case "moveTemplate":
+      return await repo.moveTemplate(message.id, message.afterId);
     
     case "validatePattern":
       return repo.validatePattern(message.email, message.pattern, message.matchType);

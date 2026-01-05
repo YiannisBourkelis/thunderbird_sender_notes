@@ -71,19 +71,66 @@ class StorageAdapter {
   // Templates
   
   /**
-   * Get all templates
-   * @returns {Promise<string[]>}
+   * @typedef {Object} Template
+   * @property {string} id - Unique identifier
+   * @property {string} text - Template content
+   * @property {number} order - Sort order (lower = first)
+   * @property {string} createdAt - ISO date string
+   * @property {string} updatedAt - ISO date string
+   */
+
+  /**
+   * Get all templates ordered by their order field
+   * @returns {Promise<Template[]>}
    */
   async getTemplates() { 
     throw new Error('Not implemented'); 
   }
   
   /**
-   * Save templates
-   * @param {string[]} templates 
+   * Get a single template by ID
+   * @param {string} id 
+   * @returns {Promise<Template|null>}
+   */
+  async getTemplateById(id) { 
+    throw new Error('Not implemented'); 
+  }
+  
+  /**
+   * Add a new template
+   * @param {string} text - Template content
+   * @returns {Promise<Template>} The created template
+   */
+  async addTemplate(text) { 
+    throw new Error('Not implemented'); 
+  }
+  
+  /**
+   * Update a single template's text
+   * @param {string} id 
+   * @param {string} text - New template content
+   * @returns {Promise<Template>} The updated template
+   */
+  async updateTemplate(id, text) { 
+    throw new Error('Not implemented'); 
+  }
+  
+  /**
+   * Delete a single template
+   * @param {string} id 
    * @returns {Promise<void>}
    */
-  async saveTemplates(templates) { 
+  async deleteTemplate(id) { 
+    throw new Error('Not implemented'); 
+  }
+  
+  /**
+   * Move a template to a new position
+   * @param {string} id - Template ID to move
+   * @param {string|null} afterId - ID of template to place after, or null to move to first position
+   * @returns {Promise<void>}
+   */
+  async moveTemplate(id, afterId) { 
     throw new Error('Not implemented'); 
   }
   

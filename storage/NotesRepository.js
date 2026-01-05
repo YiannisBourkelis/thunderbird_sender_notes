@@ -171,67 +171,83 @@ class NotesRepository {
   
   /**
    * Get templates (returns defaults if none saved)
-   * @returns {Promise<string[]>}
+   * Returns Template[] objects with id, text, order, createdAt, updatedAt
+   * @returns {Promise<Template[]>}
    */
   async getTemplates() {
     const templates = await this.adapter.getTemplates();
     if (templates.length === 0 && this._defaultTemplatesProvider) {
-      return this._defaultTemplatesProvider();
+      // Return default templates - they'll be saved on first use
+      const defaults = this._defaultTemplatesProvider();
+      // Convert string array to Template-like objects for display
+      return defaults.map((text, index) => ({
+        id: null, // No ID until saved
+        text: text,
+        order: index,
+        isDefault: true // Flag to indicate these are unsaved defaults
+      }));
     }
     return templates;
   }
   
   /**
-   * Save all templates
-   * @param {string[]} templates 
-   * @returns {Promise<{success: boolean}>}
+   * Get templates as simple string array (backward compatibility)
+   * @returns {Promise<string[]>}
    */
-  async saveTemplates(templates) {
-    await this.adapter.saveTemplates(templates);
-    return { success: true };
+  async getTemplatesAsStrings() {
+    const templates = await this.getTemplates();
+    return templates.map(t => t.text);
+  }
+  
+  /**
+   * Get a single template by ID
+   * @param {string} id 
+   * @returns {Promise<Template|null>}
+   */
+  async getTemplateById(id) {
+    return this.adapter.getTemplateById(id);
   }
   
   /**
    * Add a new template
-   * @param {string} template 
-   * @returns {Promise<{success: boolean, templates: string[]}>}
+   * @param {string} text - Template content
+   * @returns {Promise<{success: boolean, template: Template}>}
    */
-  async addTemplate(template) {
-    const templates = await this.getTemplates();
-    if (!templates.includes(template)) {
-      templates.push(template);
-      await this.adapter.saveTemplates(templates);
-    }
-    return { success: true, templates };
+  async addTemplate(text) {
+    const template = await this.adapter.addTemplate(text);
+    return { success: true, template };
   }
   
   /**
-   * Update a template by index
-   * @param {number} index 
-   * @param {string} newText 
-   * @returns {Promise<{success: boolean, templates: string[]}>}
+   * Update a template's text
+   * @param {string} id - Template ID
+   * @param {string} text - New template content
+   * @returns {Promise<{success: boolean, template: Template}>}
    */
-  async updateTemplate(index, newText) {
-    const templates = await this.getTemplates();
-    if (index >= 0 && index < templates.length) {
-      templates[index] = newText;
-      await this.adapter.saveTemplates(templates);
-    }
-    return { success: true, templates };
+  async updateTemplate(id, text) {
+    const template = await this.adapter.updateTemplate(id, text);
+    return { success: true, template };
   }
   
   /**
-   * Delete a template by index
-   * @param {number} index 
-   * @returns {Promise<{success: boolean, templates: string[]}>}
+   * Delete a template
+   * @param {string} id - Template ID
+   * @returns {Promise<{success: boolean}>}
    */
-  async deleteTemplate(index) {
-    const templates = await this.getTemplates();
-    if (index >= 0 && index < templates.length) {
-      templates.splice(index, 1);
-      await this.adapter.saveTemplates(templates);
-    }
-    return { success: true, templates };
+  async deleteTemplate(id) {
+    await this.adapter.deleteTemplate(id);
+    return { success: true };
+  }
+  
+  /**
+   * Move a template to a new position
+   * @param {string} id - Template ID to move
+   * @param {string|null} afterId - ID of template to place after, or null to move to first position
+   * @returns {Promise<{success: boolean}>}
+   */
+  async moveTemplate(id, afterId) {
+    await this.adapter.moveTemplate(id, afterId);
+    return { success: true };
   }
   
   // ==================== Settings ====================

@@ -2,7 +2,6 @@
 
 // Template message keys for fetching translated templates
 const TEMPLATE_KEYS = [
-  "templateVipPrioritize",
   "templateImportantClient",
   "templatePotentialSpam",
   "templateSpam",

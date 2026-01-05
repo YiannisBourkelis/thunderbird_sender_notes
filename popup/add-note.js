@@ -236,11 +236,12 @@ function renderQuickNotesTags() {
   templates.forEach((template, index) => {
     const tag = document.createElement('button');
     tag.className = 'quick-note-tag';
-    const displayText = template.length > 40 ? template.substring(0, 40) + '...' : template;
+    const text = template.text;
+    const displayText = text.length > 40 ? text.substring(0, 40) + '...' : text;
     tag.textContent = displayText;
-    tag.title = template;
+    tag.title = text;
     tag.addEventListener('click', () => {
-      insertAtCursor(noteTextarea, template);
+      insertAtCursor(noteTextarea, text);
     });
     quickNotesTagsContainer.appendChild(tag);
   });
@@ -268,10 +269,11 @@ function renderDropdown() {
   templates.forEach((template, index) => {
     const item = document.createElement('div');
     item.className = 'dropdown-item';
-    item.textContent = template;
-    item.title = template;
+    const text = template.text;
+    item.textContent = text;
+    item.title = text;
     item.addEventListener('click', () => {
-      insertAtCursor(noteTextarea, template);
+      insertAtCursor(noteTextarea, text);
       quickNoteDropdown.classList.remove('show');
     });
     quickNoteDropdown.appendChild(item);
