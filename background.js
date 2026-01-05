@@ -265,6 +265,9 @@ messenger.runtime.onMessage.addListener(async (message, sender) => {
     case "validatePattern":
       return repo.validatePattern(message.email, message.pattern, message.matchType);
     
+    case "isOwnEmail":
+      return { isOwn: await isSentByUser(message.email) };
+    
     case "openAddNotePopup":
       // Check if the email is the user's own account
       if (await isSentByUser(message.email)) {

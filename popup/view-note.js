@@ -6,6 +6,7 @@ let currentNotes = [];
 // DOM elements
 const noNotesDiv = document.getElementById('no-notes');
 const hasNotesDiv = document.getElementById('has-notes');
+const senderHeaderDiv = document.querySelector('.sender-header');
 const senderEmailSpan = document.getElementById('sender-email');
 const notesList = document.getElementById('notes-list');
 const addNoteBtn = document.getElementById('add-note-btn');
@@ -160,6 +161,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (!currentSender || !currentSender.email) {
       showStatus(i18n('noMessageSelected'), 'error');
+      return;
+    }
+    
+    // Check if sender is user's own account
+    const ownEmailCheck = await messenger.runtime.sendMessage({
+      action: 'isOwnEmail',
+      email: currentSender.email
+    });
+    
+    if (ownEmailCheck && ownEmailCheck.isOwn) {
+      console.log("Mail Note: Sender is user's own account, hiding notes");
+      showStatus(i18n('ownEmailWarningMessage'), 'info');
+      senderHeaderDiv.style.display = 'none';
+      noNotesDiv.style.display = 'none';
+      hasNotesDiv.style.display = 'none';
       return;
     }
     
