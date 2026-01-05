@@ -10,51 +10,51 @@
       padding: 0;
     }
     
+    html, body {
+      height: auto;
+      overflow: hidden;
+    }
+    
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      padding: 24px;
+      padding: 20px 24px;
       background: #fff;
       color: #333;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
       text-align: center;
     }
     
-    .icon {
-      font-size: 48px;
-      margin-bottom: 16px;
-    }
-    
     h1 {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 600;
       margin-bottom: 12px;
       color: #d97706;
     }
     
     p {
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.5;
-      color: #666;
-      margin-bottom: 20px;
+      color: #555;
+      margin-bottom: 16px;
     }
     
     button {
       background: #2563eb;
       color: white;
       border: none;
-      padding: 10px 24px;
+      padding: 8px 20px;
       border-radius: 6px;
-      font-size: 14px;
+      font-size: 13px;
       cursor: pointer;
       transition: background 0.2s;
     }
     
     button:hover {
       background: #1d4ed8;
+    }
+    
+    button:focus {
+      outline: 2px solid #93c5fd;
+      outline-offset: 2px;
     }
     
     @media (prefers-color-scheme: dark) {
@@ -70,26 +70,36 @@
       p {
         color: #a0a0a0;
       }
+      
+      button {
+        background: #3b82f6;
+      }
+      
+      button:hover {
+        background: #2563eb;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="icon">📧</div>
   <h1 data-i18n="ownEmailWarningTitle">Cannot Add Note</h1>
   <p data-i18n="ownEmailWarningMessage">Notes can only be added to messages received from other people. This message was sent from your own email account.</p>
   <button id="closeBtn" data-i18n="buttonClose">Close</button>
   
+  <script src="../browser-polyfill.js"></script>
   <script>
     // i18n
     function applyI18n() {
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        const message = messenger.i18n.getMessage(key);
-        if (message) {
+        const msg = typeof browser !== 'undefined' && browser.i18n 
+          ? browser.i18n.getMessage(key)
+          : (typeof messenger !== 'undefined' && messenger.i18n ? messenger.i18n.getMessage(key) : null);
+        if (msg) {
           if (el.tagName === 'TITLE') {
-            document.title = message;
+            document.title = msg;
           } else {
-            el.textContent = message;
+            el.textContent = msg;
           }
         }
       });
@@ -99,6 +109,13 @@
     
     document.getElementById('closeBtn').addEventListener('click', () => {
       window.close();
+    });
+    
+    // Also close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        window.close();
+      }
     });
   </script>
 </body>

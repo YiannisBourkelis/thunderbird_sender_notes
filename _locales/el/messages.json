@@ -99,6 +99,9 @@
   "buttonClose": {
     "message": "Κλείσιμο"
   },
+  "buttonOk": {
+    "message": "OK"
+  },
   
   "settingsTitle": {
     "message": "Ρυθμίσεις Σημειώσεων"

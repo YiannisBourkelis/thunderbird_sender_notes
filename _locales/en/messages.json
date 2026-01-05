@@ -132,6 +132,10 @@
     "message": "Close",
     "description": "Close button text"
   },
+  "buttonOk": {
+    "message": "OK",
+    "description": "OK button text"
+  },
   
   "settingsTitle": {
     "message": "Sender Notes Settings",

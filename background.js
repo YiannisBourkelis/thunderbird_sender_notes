@@ -107,14 +107,23 @@ messenger.menus.onClicked.addListener(async (info, tab) => {
       const message = await messenger.messages.get(messageId);
       const senderEmail = extractEmail(message.author);
       
+      console.log("Menu click - sender email:", senderEmail);
+      console.log("Menu click - message author:", message.author);
+      
       // Check if sender is the user's own account
-      if (await isSentByUser(senderEmail)) {
-        // Show warning popup for sent messages
+      const userEmails = await getUserEmailAddresses();
+      console.log("User emails:", [...userEmails]);
+      
+      const isOwnEmail = await isSentByUser(senderEmail);
+      console.log("Is own email?", isOwnEmail);
+      
+      if (isOwnEmail) {
+        console.log("Showing own-email warning");
         await messenger.windows.create({
           type: "popup",
-          url: `popup/own-email-warning.html`,
-          width: 400,
-          height: 200
+          url: "popup/alert.html?titleKey=ownEmailWarningTitle&messageKey=ownEmailWarningMessage&icon=warning",
+          width: 420,
+          height: 250
         });
         return;
       }
@@ -257,6 +266,18 @@ messenger.runtime.onMessage.addListener(async (message, sender) => {
       return repo.validatePattern(message.email, message.pattern, message.matchType);
     
     case "openAddNotePopup":
+      // Check if the email is the user's own account
+      if (await isSentByUser(message.email)) {
+        console.log("openAddNotePopup: Blocking - email is user's own account:", message.email);
+        await messenger.windows.create({
+          type: "popup",
+          url: "popup/alert.html?titleKey=ownEmailWarningTitle&messageKey=ownEmailWarningMessage&icon=warning",
+          width: 420,
+          height: 250
+        });
+        return { success: false, error: 'own-email' };
+      }
+      
       const addNoteUrl = `popup/add-note.html?email=${encodeURIComponent(message.email)}&author=${encodeURIComponent(message.author)}${message.noteId ? `&noteId=${encodeURIComponent(message.noteId)}` : ''}`;
       const addWindowKey = message.noteId || `new-${message.email}`;
       return await openOrFocusNoteWindow(addWindowKey, addNoteUrl);
