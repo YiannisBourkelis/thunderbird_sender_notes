@@ -611,11 +611,41 @@ async function getCurrentMessageSender(tabId) {
     console.log("getCurrentMessageSender called with tabId:", tabId);
     
     if (messenger.messageDisplay && messenger.messageDisplay.getDisplayedMessages) {
+      // If we have a specific tabId, check that tab first
+      if (tabId) {
+        try {
+          const messageList = await messenger.messageDisplay.getDisplayedMessages(tabId);
+          if (messageList && messageList.messages && messageList.messages.length > 0) {
+            const message = messageList.messages[0];
+            console.log("Found displayed message in specified tab", tabId, ":", message.author);
+            
+            const senderEmail = extractEmail(message.author);
+            
+            // Skip messages sent by the user - only process received messages
+            if (await isSentByUser(senderEmail)) {
+              console.log("Skipping message sent by user:", senderEmail);
+              return null;
+            }
+            
+            return {
+              email: senderEmail,
+              author: message.author
+            };
+          }
+        } catch (e) {
+          console.log("Could not get message from specified tab:", e.message);
+        }
+      }
+      
+      // Fallback: check all tabs if no tabId or no message found in specified tab
       try {
         const tabs = await messenger.tabs.query({});
         console.log("Checking", tabs.length, "tabs for displayed messages");
         
         for (const tab of tabs) {
+          // Skip the tab we already checked
+          if (tab.id === tabId) continue;
+          
           try {
             const messageList = await messenger.messageDisplay.getDisplayedMessages(tab.id);
             if (messageList && messageList.messages && messageList.messages.length > 0) {
