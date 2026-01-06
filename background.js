@@ -85,21 +85,104 @@ messenger.runtime.onInstalled.addListener(async (details) => {
   }
 });
 
+// ==================== Background i18n ====================
+
+// Cache for loaded translations (background script version)
+let bgCustomMessages = null;
+let bgCurrentLanguage = 'auto';
+
+/**
+ * Load messages for a specific language in background script
+ * @param {string} lang - Language code or 'auto'
+ */
+async function bgLoadMessages(lang) {
+  if (lang === 'auto') {
+    bgCustomMessages = null;
+    return;
+  }
+  
+  try {
+    const url = messenger.runtime.getURL(`_locales/${lang}/messages.json`);
+    const response = await fetch(url);
+    if (response.ok) {
+      bgCustomMessages = await response.json();
+    } else {
+      bgCustomMessages = null;
+    }
+  } catch (error) {
+    console.warn(`Error loading messages for ${lang}:`, error);
+    bgCustomMessages = null;
+  }
+}
+
+/**
+ * Get translated message respecting user's language preference
+ * @param {string} key - Message key
+ * @param {string|string[]} [substitutions] - Optional substitutions
+ * @returns {string} Translated message
+ */
+function bgI18n(key, substitutions) {
+  // Use custom messages if loaded
+  if (bgCustomMessages && bgCustomMessages[key] && bgCustomMessages[key].message) {
+    let message = bgCustomMessages[key].message;
+    
+    // Handle substitutions
+    if (substitutions) {
+      const subs = Array.isArray(substitutions) ? substitutions : [substitutions];
+      subs.forEach((sub, index) => {
+        message = message.replace(new RegExp(`\\$${index + 1}`, 'g'), sub);
+      });
+    }
+    
+    return message;
+  }
+  
+  // Fall back to messenger i18n
+  return messenger.i18n.getMessage(key, substitutions) || key;
+}
+
+/**
+ * Initialize background i18n from user settings
+ */
+async function initBgI18n() {
+  const { settings = {} } = await messenger.storage.local.get('settings');
+  bgCurrentLanguage = settings.language || 'auto';
+  await bgLoadMessages(bgCurrentLanguage);
+}
+
 // ==================== Context Menus ====================
 
-// Remove any existing menus first (prevents "already exists" errors on reload)
-messenger.menus.removeAll().then(() => {
+/**
+ * Create or update context menus with current translations
+ */
+async function setupContextMenus() {
+  await messenger.menus.removeAll();
+  
   messenger.menus.create({
     id: "add-sender-note",
-    title: messenger.i18n.getMessage("contextMenuAddNote"),
+    title: bgI18n("contextMenuAddNote"),
     contexts: ["message_list"]
   });
 
   messenger.menus.create({
     id: "manage-all-notes",
-    title: messenger.i18n.getMessage("toolsMenuManage"),
+    title: bgI18n("toolsMenuManage"),
     contexts: ["tools_menu"]
   });
+}
+
+// Listen for settings changes to update menus
+messenger.storage.onChanged.addListener(async (changes, areaName) => {
+  if (areaName === 'local' && changes.settings) {
+    const newSettings = changes.settings.newValue || {};
+    const newLang = newSettings.language || 'auto';
+    
+    if (newLang !== bgCurrentLanguage) {
+      bgCurrentLanguage = newLang;
+      await bgLoadMessages(newLang);
+      await setupContextMenus();
+    }
+  }
 });
 
 messenger.menus.onClicked.addListener(async (info, tab) => {
@@ -661,9 +744,14 @@ async function checkCurrentMessageNotes(tabId) {
 
 // ==================== Initialization ====================
 
-// Initialize storage on script load
-initializeStorage().then(() => {
-  console.log("Mail Note background script loaded with IndexedDB storage");
-}).catch(e => {
-  console.error("Failed to initialize storage:", e);
-});
+// Initialize storage and i18n on script load
+(async function initialize() {
+  try {
+    await initializeStorage();
+    await initBgI18n();
+    await setupContextMenus();
+    console.log("Mail Note background script loaded with IndexedDB storage");
+  } catch (e) {
+    console.error("Failed to initialize:", e);
+  }
+})();

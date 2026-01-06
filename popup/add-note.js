@@ -190,7 +190,7 @@ async function updateMatchPreview() {
     });
     
     if (duplicate && duplicate.exists) {
-      matchPreview.innerHTML = `<span class="preview-error">⚠️ A note with this exact pattern and match type already exists. Please edit the existing note instead.</span>`;
+      matchPreview.innerHTML = `<span class="preview-error">⚠️ ${i18n('duplicatePattern')}</span>`;
       return;
     }
     

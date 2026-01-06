@@ -101,7 +101,7 @@
     "description": "Confirmation message for delete"
   },
   "duplicatePattern": {
-    "message": "A note with this exact pattern and match type already exists.",
+    "message": "A note with this exact pattern and match type already exists. Please edit the existing note instead.",
     "description": "Error for duplicate pattern"
   },
   "emptyNote": {
