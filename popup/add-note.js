@@ -45,11 +45,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   let existingNote = null;
   
   if (noteIdParam) {
-    // Load specific note by ID
-    const allNotes = await messenger.runtime.sendMessage({ action: 'getAllNotes' });
-    if (allNotes && allNotes[noteIdParam]) {
-      existingNote = { ...allNotes[noteIdParam], id: noteIdParam };
-    }
+    // Load specific note by ID (convert string param to number)
+    const noteId = parseInt(noteIdParam, 10);
+    existingNote = await messenger.runtime.sendMessage({ action: 'getNoteById', noteId });
   }
   
   if (existingNote) {

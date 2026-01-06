@@ -246,6 +246,9 @@ messenger.runtime.onMessage.addListener(async (message, sender) => {
     case "getAllNotes":
       return await repo.getAllNotes();
     
+    case "getNoteById":
+      return await repo.getNoteById(message.noteId);
+    
     case "getCurrentMessageSender":
       return await getCurrentMessageSender(sender.tab?.id);
     

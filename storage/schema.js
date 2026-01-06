@@ -28,6 +28,7 @@ const DB_SCHEMA = {
         {
           name: 'notes',
           keyPath: 'id',
+          autoIncrement: true,
           indexes: [
             { name: 'pattern', keyPath: 'pattern', unique: false },
             { name: 'matchType', keyPath: 'matchType', unique: false },
@@ -37,6 +38,7 @@ const DB_SCHEMA = {
         {
           name: 'templates',
           keyPath: 'id',
+          autoIncrement: true,
           indexes: [
             { name: 'order', keyPath: 'order', unique: false }
           ]
@@ -75,14 +77,18 @@ function applySchemaVersion(db, tx, version) {
   if (schema.stores) {
     for (const storeDef of schema.stores) {
       if (!db.objectStoreNames.contains(storeDef.name)) {
-        const store = db.createObjectStore(storeDef.name, { keyPath: storeDef.keyPath });
+        const storeOptions = { keyPath: storeDef.keyPath };
+        if (storeDef.autoIncrement) {
+          storeOptions.autoIncrement = true;
+        }
+        const store = db.createObjectStore(storeDef.name, storeOptions);
         
         // Create indexes
         for (const indexDef of storeDef.indexes || []) {
           store.createIndex(indexDef.name, indexDef.keyPath, { unique: indexDef.unique });
         }
         
-        console.log(`  Created store: ${storeDef.name}`);
+        console.log(`  Created store: ${storeDef.name}${storeDef.autoIncrement ? ' (autoIncrement)' : ''}`);
       }
     }
   }

@@ -74,10 +74,8 @@ class NotesRepository {
     }
     
     const now = new Date().toISOString();
-    const noteId = id || this._generateId();
     
     const noteToSave = {
-      id: noteId,
       pattern: pattern.toLowerCase(),
       matchType: matchType,
       note: note,
@@ -86,8 +84,13 @@ class NotesRepository {
       updatedAt: now
     };
     
-    await this.adapter.saveNote(noteToSave);
-    return { success: true, noteId };
+    // Include ID only if updating existing note
+    if (id) {
+      noteToSave.id = id;
+    }
+    
+    const savedNote = await this.adapter.saveNote(noteToSave);
+    return { success: true, noteId: savedNote.id };
   }
   
   /**
@@ -291,17 +294,6 @@ class NotesRepository {
     const settings = await this.getSettings();
     settings[key] = value;
     return this.saveSettings(settings);
-  }
-  
-  // ==================== Helpers ====================
-  
-  /**
-   * Generate a unique ID
-   * @private
-   * @returns {string}
-   */
-  _generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
   }
   
   /**

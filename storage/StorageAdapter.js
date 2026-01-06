@@ -3,7 +3,7 @@
  * All storage backends must implement these methods
  * 
  * @typedef {Object} Note
- * @property {string} id
+ * @property {number} [id] - Auto-increment ID (undefined for new notes)
  * @property {string} pattern
  * @property {string} matchType - 'exact' | 'startsWith' | 'endsWith' | 'contains'
  * @property {string} note
@@ -72,7 +72,7 @@ class StorageAdapter {
   
   /**
    * @typedef {Object} Template
-   * @property {string} id - Unique identifier
+   * @property {number} [id] - Auto-increment ID (undefined for new templates)
    * @property {string} text - Template content
    * @property {number} order - Sort order (lower = first)
    * @property {string} createdAt - ISO date string
