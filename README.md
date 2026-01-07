@@ -8,22 +8,14 @@
 
 ---
 
-## The Problem
+## What It Does
 
-Many Thunderbird users:
+**Sender Notes** lets you attach notes to email senders. When you open an email, your note appears automatically as a banner at the top of the message—reminding you of important context like "important client", "complaint history", "appointment no-show", or anything else you need to remember.
 
-- 📧 Handle repeat conversations with the same people
-- 🧠 Rely on mental context ("this client is important", "slow to pay", "VIP", "legal risk", etc.)
-- ⏰ Lose that context over time or across team members
-
-## The Solution
-
-**Sender Notes** lets you attach notes to email senders. When you open an email, your note appears automatically as a banner at the top of the message.
-
-✅ Simple  
-✅ High-signal  
-✅ Immediately useful  
-✅ No external services or accounts required
+✅ Simple — right-click any email to add a note  
+✅ Automatic — notes appear when you need them  
+✅ Private — all data stays in your Thunderbird  
+✅ Flexible — match by exact email, domain, or pattern
 
 ---
 
